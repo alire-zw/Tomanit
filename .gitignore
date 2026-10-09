@@ -30,3 +30,6 @@ Thumbs.db
 tmp/
 coverage/
 .cache/
+
+**/.git.bak-nested/
+

@@ -1,0 +1,39 @@
+{
+  "name": "hugeicons",
+  "type": "module",
+  "version": "1.0.0",
+  "description": "Download icons locally",
+  "license": "MIT",
+  "author": "Abinash Karmakar",
+  "module": "./dist/index.js",
+  "homepage": "https://github.com/codeAbinash/hugeicons",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/codeAbinash/hugeicons.git"
+  },
+  "bugs": {
+    "url": "https://github.com/codeAbinash/hugeicons/issues"
+  },
+  "scripts": {
+    "build": "esbuild index.ts --bundle --platform=node --format=esm --outfile=dist/index.js --keep-names",
+    "build:types": "tsc",
+    "prettier": "prettier --check .",
+    "format": "prettier --write .",
+    "ts" : "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^24.1.0",
+    "@types/react": "^19.1.9",
+    "esbuild": "^0.25.8",
+    "prettier": "^3.6.2",
+    "typescript": "^5.9.2"
+  },
+  "bin": {
+    "ic": "dist/index.js"
+  }
+}
