@@ -1,0 +1,243 @@
+.bcp-modal__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  background: color-mix(in srgb, var(--accent) 28%, rgba(0, 0, 0, 0.45));
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.42s cubic-bezier(0.4, 0, 1, 1);
+}
+
+.bcp-modal__backdrop--visible {
+  opacity: 1;
+  pointer-events: auto;
+  transition: opacity 0.45s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.bcp-modal__panel {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  width: 100%;
+  max-width: 480px;
+  margin-inline: auto;
+  box-sizing: border-box;
+  padding: 28px 22px calc(22px + env(safe-area-inset-bottom, 0px));
+  border-radius: 0;
+  background: var(--surface);
+  color: var(--text);
+  transform: translate3d(0, 100%, 0);
+  transition: transform 0.42s cubic-bezier(0.4, 0, 1, 1);
+}
+
+.bcp-modal__panel--visible {
+  transform: translate3d(0, 0, 0);
+  transition: transform 0.45s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.bcp-modal__title {
+  margin: 0 0 10px;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+  color: var(--text);
+  text-align: start;
+}
+
+.bcp-modal__list {
+  display: flex;
+  flex-direction: column;
+  max-height: min(56vh, 420px);
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.bcp-modal__list::-webkit-scrollbar {
+  display: none;
+}
+
+.bcp-modal__item {
+  display: grid;
+  /* Same proportions as checkout card row on MerchantPay */
+  grid-template-columns: 58px minmax(0, 1fr) 28px;
+  align-items: center;
+  column-gap: 12px;
+  width: 100%;
+  margin: 0;
+  padding: 14px 0;
+  border: none;
+  border-bottom: 1px solid var(--border-subtle);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.bcp-modal__item:active {
+  opacity: 0.88;
+}
+
+.bcp-modal__logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 58px;
+  height: 58px;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.bcp-modal__logo img {
+  display: block;
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+
+.bcp-modal__copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 0;
+  text-align: start;
+}
+
+.bcp-modal__bank {
+  width: 100%;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: start;
+}
+
+.bcp-modal__mask {
+  direction: ltr;
+  unicode-bidi: isolate;
+  align-self: flex-start;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.25;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  text-align: start;
+}
+
+.bcp-modal__check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #fbbf24;
+}
+
+.bcp-modal__check svg {
+  display: block;
+}
+
+.bcp-modal__check svg path {
+  opacity: 1 !important;
+  fill: #fbbf24 !important;
+}
+
+.bcp-modal__check-spacer {
+  width: 28px;
+  height: 28px;
+}
+
+.bcp-modal__add {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  width: 100%;
+  margin: 4px 0 0;
+  padding: 20px 0 6px;
+  border: none;
+  background: transparent;
+  color: var(--accent);
+  font: inherit;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1.35;
+  text-align: start;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.bcp-modal__add-plus {
+  display: inline-flex;
+  flex-shrink: 0;
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.bcp-modal__add:active {
+  opacity: 0.8;
+}
+
+.bcp-modal__footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 32px;
+  padding-top: 6px;
+}
+
+.bcp-modal__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 58px;
+  height: 58px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--text-muted) 12%, var(--surface));
+  color: var(--text-muted);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.bcp-modal__close:active {
+  transform: scale(0.96);
+  opacity: 0.88;
+}
+
+.bcp-modal__close svg {
+  display: block;
+  width: 24px;
+  height: 24px;
+}
+
+.bcp-modal__close svg path {
+  opacity: 1 !important;
+  fill: currentColor !important;
+}
+
+[data-theme="dark"] .bcp-modal__backdrop {
+  background: color-mix(in srgb, var(--accent) 18%, rgba(0, 0, 0, 0.62));
+}
+
+[data-theme="dark"] .bcp-modal__close {
+  background: color-mix(in srgb, var(--text-muted) 16%, var(--surface-elevated));
+}

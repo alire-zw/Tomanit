@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="fa_IR" data-theme="light" style="color-scheme: light" class=" js flexbox canvas canvastext webgl no-touch geolocation postmessage no-websqldatabase indexeddb hashchange history draganddrop websockets rgba hsla multiplebgs backgroundsize borderimage borderradius boxshadow textshadow opacity cssanimations csscolumns cssgradients no-cssreflections csstransforms csstransforms3d csstransitions fontface generatedcontent video audio localstorage sessionstorage webworkers no-applicationcache svg inlinesvg smil svgclippaths"><head>
+  <title>درگاه پرداخت اینترنتی سپ</title>
+
+  <meta charset="utf-8">
+  <meta http-equiv="x-ua-compatible" content="IE=edge,10,11">
+  <meta http-equiv="cache-control" content="no-cache">
+  <meta http-equiv="pragma" content="no-cache">
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+
+  <meta name="viewport" content="width=device-width, user-scalable=0, initial-scale=1, minimum-scale=1, maximum-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light only">
+  <meta name="description" content="درگاه پرداخت اینترنتی سپ">
+
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="language" content="fa_IR">
+
+  <link rel="icon" type="image/png" href="https://sep.shaparak.ir/OnlinePG/bundle/fav/favicon.ico">
+  <link rel="icon" type="image/png" href="https://sep.shaparak.ir/OnlinePG/bundle/fav/favicon.png">
+  <link rel="shortcut icon" type="image/png" href="https://sep.shaparak.ir/OnlinePG/bundle/fav/favicon.png">
+  <link rel="apple-touch-icon" href="https://sep.shaparak.ir/OnlinePG/bundle/fav/apple-touch-icon.png">
+
+  <link rel="icon" type="image/png" sizes="16x16" href="https://sep.shaparak.ir/OnlinePG/bundle/fav/favicon-16x16.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="https://sep.shaparak.ir/OnlinePG/bundle/fav/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="https://sep.shaparak.ir/OnlinePG/bundle/fav/android-chrome-192x192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="https://sep.shaparak.ir/OnlinePG/bundle/fav/android-chrome-512x512.png">
+
+  <!--[if !IE]>-->
+  
+<script type="text/javascript">
+  var areaName = "OnlinePG", userSessionKey = "TomanitDemo01", userCellNumber = "", culture = "fa", paymentMethod="Card", hostAddress = "assets", serverUrl = "assets", actionUrl = "/OnlinePG/OnlinePG", removeEmailUrl = "/OnlinePG/OnlinePG/Fa/Payment/RemoveEmail", autoHideMessageTimeOut = 1700, deActiveCardEnabled = "True";
+    var otpSettings = {
+        maxTriesCount: 5, maxTriesMessage: "پیام حداکثر تعداد درخواست رمز یکبار مصرپ", otpTimeOut: 120, otpTryAgainMessage: "مشتری گرامی، چنانچه قبلا نسبت به پویاسازی رمز دوم خود اقدام نموده و از صحت اطلاعات واردشده اطمینان دارید ولی هنوز رمز دوم پویا را دریافت نکرده اید، مجددا دکمه درخواست رمز پویا رابفشارید .", baseUrl: "", otpTryAgainButtonTitle: "دریافت مجدد رمز پویا"
+    };
+    var giftCardHintMessage = "کاربر گرامی؛ کارت هدیه شما نیاز به دریافت رمز پویا ندارد خواهشمند است از رمز دوم ثابت کارت هدیه خود استفاده نمایید.";
+    var langs = {
+        maxTriesMessage: "تعداد دفعات مجاز دریافت رمز پویا به پایان رسیده است",
+        more: "بیشتر", less: "کمتر", virtualNumPad: "صفحه کلید امن", bank: "بانک", otpButton: "دریافت رمز پویا", otpButtonTitle: "رمز پویا", serviceUnavailable: "سرویس در حال حاضر در دسترس نیست",
+        transactionDetails: "جزییات تراکنش", neverMind: "انصراف", addNewCard: "افزودن کارت جدید", cardsManagement: "مدیریت کارت‌ها", deleteCard: "حذف", errorProgress: "خطا در پردازش درخواست", successPayment: "تراکنش با موفقیت انجام شد", validations: {
+            invalidValue: "مقدار وارد شده صحیح نیست", invalidEmailAddress: "ایمیل وارد شده صحیح نمی‌باشد", invalidCellNumber: "شماره موبایل ارسالی درست نمی‌باشد", cardExpired: "کارت شما منقضی شده است"
+      }, errorProgress: "خطا در پردازش درخواست", polPayFailedText: "متاسفانه صدور مجوز یک‌بارمصرف شما از سامانه‌ی پل‌پی شاپرک موفقیت‌آمیز نبود. لطفا دوباره تلاش کنید یا در صورت تکرار مشکل با پشتیبانی تماس بگیرید.", serviceUnavailable: "سرویس در حال حاضر در دسترس نیست"
+    };
+</script>
+
+  <link href="/assets/css/app.css?v=25" rel="stylesheet">
+  <link href="/assets/css/tomanit.css?v=25" rel="stylesheet">
+
+<script src="/assets/js/jquery.js"></script>
+
+<script src="/assets/js/validate.js"></script>
+
+<script src="/assets/js/helpers.js"></script>
+
+
+<script src="/assets/js/panBinsList.js"></script>
+
+<script src="/assets/js/demo.js"></script>
+
+<script src="/assets/js/app.js"></script>
+
+
+
+  <!--<![endif]-->
+</head>
+
+<body>
+  <!--[if !IE]>-->
+  
+<header class="header" role="heading" aria-label="درگاه پرداخت اینترنتی سپ">
+  <div class="container">
+    <div class="nav">
+      <h1 class="title show-sm">درگاه پرداخت اینترنتی سپ</h1>
+      <div class="lang">
+        <button id="ChangeLanguage" name="ChangeLanguage" type="button" class="switch" role="button" tabindex="0" aria-label="Change Language" aria-expanded="false" aria-haspopup="listbox" aria-controls="LangListBox">
+          <i class="icn-language" aria-hidden="true"></i>
+          <span>English</span>
+        </button>
+        <div id="LangListBox" class="lang-box" role="listbox" aria-label="Change Language" tabindex="-1">
+          <span>Change Language</span>
+          <ul class="lang-list">
+            <li>
+              <a href="javascript:void(0)" class="item  current" data-cultre="Fa" role="option" tabindex="-1" aria-label="فارسی" aria-selected="true">فارسی</a>
+            </li>
+            <li>
+              <a href="javascript:void(0)" class="item" data-cultre="En" role="option" tabindex="-1" aria-label="English" aria-selected="false">English</a>
+            </li>
+          </ul>
+          <input id="CloseLangBox" name="CloseLangBox" type="button" class="icn-button icn-xcross xcross" role="button" tabindex="-1" aria-label="بستن">
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <i class="icn-sep" aria-hidden="true"><span class="path1"></span><span class="path2"></span><span class="path3"></span><span class="path4"></span><span class="path5"></span><span class="path6"></span><span class="path7"></span><span class="path8"></span></i>
+      <div class="center-div">
+        <h1 class="hide-sm">درگاه پرداخت اینترنتی سپ</h1>
+        <div class="timer-holder show-sm">
+          <div class="purchase-timer" role="timer" aria-label="زمان باقی‌مانده" tabindex="0">
+            <h2>زمان باقی‌مانده:</h2>
+            <mark class="remaining-time" aria-live="polite" aria-atomic="true">07:49</mark>
+          </div>
+        </div>
+      </div>
+      <i class="icn-shaparak" aria-hidden="true"></i>
+    </div>
+  </div>
+<form action="#" id="frmCulture" method="post">  <input id="ViewName" name="ViewName" type="hidden" value="Card">
+  <input id="SessionKey" name="SessionKey" type="hidden" value="TomanitDemo01">
+  <input id="Action" name="Action" type="hidden" value="changeculture">
+  <input id="Culture" name="Culture" type="hidden" value="en">
+</form></header>
+
+  <div class="main">
+    <div class="container">
+      
+
+<main class="purchase" role="main" aria-label="درگاه پرداخت اینترنتی سپ">
+  <div class="row reverse auto-flow">
+    <section class="col col-4" role="presentation" aria-label="جزییات تراکنش - اطلاعات پذیرنده">
+      <div class="card">
+        
+<div class="purchase-timer hide-sm" data-timeout="599000" role="timer" aria-label="زمان باقی‌مانده" tabindex="0">
+  <h2>زمان باقی‌مانده:</h2>
+  <mark class="remaining-time" aria-live="polite" aria-atomic="true">07:49</mark>
+</div>
+<div class="merchant">
+  <div class="merchant-name">
+    <i class="icn-merchant" aria-hidden="true"></i>
+    <span>پذیرنده</span>
+    <h2>تومانیت</h2>
+  </div>
+  <div class="purchase-value">
+    <div class="value">
+      <i class="icn-price" aria-hidden="true"></i>
+      <span>مبلغ</span>
+      <h2>1,877,700 ریال</h2>
+    </div>
+    <div class="letters">
+      <small>یکصد و هشتاد و هفت هزار و هفتصد و هفتاد
+        تومان</small>
+    </div>
+  </div>
+  <div class="merchant-info">
+    <div class="item">
+      <i class="icn-merchant-id" aria-hidden="true"></i>
+      <span>شماره پذیرنده / ترمینال</span>
+      <em>16952085 / 15415280</em>
+    </div>
+    <div class="item">
+      <i class="icn-website" aria-hidden="true"></i>
+      <span>سایت پذیرنده</span>
+      <em>shadicard.ir</em>
+    </div>
+  </div>
+  <button id="MoreBtn" name="MoreBtn" class="action action-more" data-relation="MerchantInfo" role="button" tabindex="0" aria-label="بیشتر">بیشتر</button>
+</div>
+
+      </div>
+    </section>
+    <div class="col col-8">
+      <section class="card" role="form" aria-label="پرداخت">
+        
+<div class="head hide-sm">
+  <h2>اطلاعات کارت خود را وارد کنید</h2>
+</div>
+<form action="#" aria-label="اطلاعات کارت خود را وارد کنید" autocomplete="off" class="form" id="frmPayment" method="post" name="frmPayment-TomanitDemo01" role="form" novalidate="novalidate"><input name="__RequestVerificationToken" type="hidden" value="E64j6HULx2wzbPbMpqCJQam5n89e9Y_BewkIGmKPzzf8rgxuJf9pXd_LIa8xId14_6UieyeX0mpk7C8VFzpB19DYZNiLL1H6Hr25EGFjCik1">  <input name="PreventAutofill" type="text" autocomplete="username" tabindex="-1" aria-hidden="true" class="hidden">
+  <input name="PreventAutofill" type="password" autocomplete="new-password" tabindex="-1" aria-hidden="true" class="hidden">
+  <input id="Action" name="Action" type="hidden" value="pay" class="ignore" aria-hidden="true">
+  <input id="Culture" name="Culture" type="hidden" value="fa" class="ignore" aria-hidden="true">
+  <input id="SessionKey" name="SessionKey" type="hidden" value="TomanitDemo01" class="ignore" aria-hidden="true">
+    <div class="row">
+      <div class="col col-12">
+        <label>شماره کارت</label>
+        <div class="input-holder has-action">
+          <input aria-label="شماره کارت" autocomplete="off" class="mono" data-focus="Cvv2" data-label="شماره کارت" data-name="PanNumber" data-val="true" data-val-required="شماره کارت الزامی است" dir="ltr" id="CardNumber_PanString" inputmode="numeric" maxlength="19" minlength="16" name="CardNumber.PanString" placeholder="____ ____ ____ ____" tabindex="0" type="tel">
+          <button id="CardList" name="CardList" type="button" class="action" data-relation="CardList" role="button" tabindex="0" aria-label="لیست کارت‌ها" aria-pressed="false">
+            <i class="icn-cards" aria-hidden="true"></i>
+          </button>
+          <i class="icn-xcross clear" aria-hidden="true"></i>
+          <div class="card-logo"></div>
+          <div class="card-list unselect"><div id="scroll" class="card-enroll" role="list"></div><div id="scroll" class="card-manager"></div><div class="card-commander"><a href="javascript:void(0)" class="add-card" tabindex="0" aria-label="افزودن کارت جدید"><i class="icn-card-add" aria-hidden="true"></i><span>افزودن کارت جدید</span></a></div></div>
+        </div>
+        <span class="field-validation-valid input-wrong" data-valmsg-for="CardNumber.PanString" data-valmsg-replace="true"></span>
+        <input id="SelectedCardId" name="SelectedCardId" type="hidden" class="ignore">
+        <input id="SelectedCardOwner" name="SelectedCardOwner" type="hidden" class="ignore">
+      </div>
+    </div>
+    <div class="row">
+      <div class="col col-12">
+        <label>شماره شناسایی دوم <small class="en">(CVV2)</small></label>
+        <div class="input-holder has-action">
+          <input aria-label="CVV2" autocomplete="off" class="password en-plh" data-back="CardNumber_PanString" data-focus="Month" data-label="CVV2" data-name="Cvv2" data-short="false" data-val="true" data-val-length="تعداد کارکترهای فیلد CVV2 باید بین 3 و 4 باشد" data-val-length-max="4" data-val-length-min="3" data-val-regex="فیلد CVV2 فقط مقادیر عددی می‌پذیرد" data-val-regex-pattern="^\d+$" data-val-required="شماره شناسایی دوم (CVV2) الزامی است" id="Cvv2" inputmode="numeric" maxlength="4" minlength="3" name="Cvv2" placeholder="CVV2" tabindex="0" type="tel">
+          <button id="CvvVirtualKeypad" name="CvvVirtualKeypad" type="button" class="action" data-relation="VirtualKeypad" role="button" tabindex="0" aria-label="صفحه کلید امن" aria-pressed="false">
+            <i class="icn-keyboard" aria-hidden="true"></i>
+          </button>
+        </div>
+        <span class="field-validation-valid input-wrong" data-valmsg-for="Cvv2" data-valmsg-replace="true"></span>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col col-12">
+        <label>تاریخ انقضا</label>
+        <div class="input-group match">
+          <input aria-label="ماه تاریخ انقضا" autocomplete="off" class="mono fa-plh" data-back="Cvv2" data-focus="Year" data-label="تاریخ انقضا" data-name="Month" data-val="true" data-val-range="فیلد ماه می بایست عددی بین 1 تا 12 باشد" data-val-range-max="12" data-val-range-min="1" id="Month" inputmode="numeric" maxlength="2" minlength="2" name="Month" placeholder="ماه" tabindex="0" type="tel">
+          <input aria-label="سال تاریخ انقضا" autocomplete="off" class="mono fa-plh" data-back="Month" data-current-year="05" data-focus="CaptchaInputText" data-label="تاریخ انقضا" data-name="Year" id="Year" inputmode="numeric" maxlength="2" minlength="2" name="Year" placeholder="سال" tabindex="0" type="tel">
+        </div>
+        <span class="field-validation-valid input-wrong" data-valmsg-for="Month" data-valmsg-replace="true"></span>
+        <span class="field-validation-valid input-wrong" data-valmsg-for="Year" data-valmsg-replace="true"></span>
+      </div>
+    </div>
+  <div class="row">
+    <div class="col col-12">
+      <label>کد امنیتی</label>
+      <div class="input-group">
+        <div class="input-holder has-action action-left">
+          <input id="CaptchaInputText" name="CaptchaInputText" type="tel" inputmode="numeric" minlength="5" maxlength="5" autocomplete="off" placeholder="کد امنیتی" data-name="CaptchaInputText" data-focus="Pin2" data-back="Year" data-label="کد امنیتی" data-val="true" data-val-required="کد امنیتی الزامی است" aria-describedby="CaptchaSecurityField-error" tabindex="0" aria_label="کد امنیتی">
+          <button id="ReloadCaptcha" name="ReloadCaptcha" type="button" class="action" data-relation="ReloadCaptcha" role="button" tabindex="0" aria-label="بازنشانی کد امنیتی">
+            <i class="icn-reload" aria-hidden="true"></i>
+          </button>
+        </div>
+        <div class="captcha-holder">
+          <img id="CaptchaImage" src="data:image/JPEG;base64,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" alt="captcha-img" class="captcha-img">
+        </div>
+      </div>
+        <div class="voice-action">
+          <button id="PlayCaptchaAudio" name="PlayCaptchaAudio" type="button" class="voice-button action" data-relation="PlayCaptchaAudio" role="button" tabindex="0">
+            <i class="icn-voice" aria-hidden="true"></i>
+            <small>پخش صوتی</small>
+          </button>
+        </div>
+      <span data-valmsg-for="CaptchaInputText" data-valmsg-replace="true" class="input-wrong field-validation-error"></span>
+      <audio class="captcha-audio" controls="controls">
+        <source id="CaptchaAudio" type="audio/mpeg" src="">
+      </audio>
+    </div>
+  </div>
+    <div class="row">
+      <div class="col col-12">
+        <label>رمز دوم/پویا</label>
+        <div class="input-group">
+          <div class="input-holder has-action action-left">
+            <input aria-label="رمز دوم/پویا" autocomplete="one-time-code" class="password en-plh" data-1p-ignore="true" data-back="CaptchaInputText" data-focus="Purchase" data-form-type="other" data-label="رمز دوم/پویا" data-lpignore="true" data-name="Pin2" data-val="true" data-val-length="تعداد کارکترهای فیلد رمز دوم/پویا باید بین 4 و 12 باشد" data-val-length-max="12" data-val-length-min="4" data-val-regex="فیلد رمز دوم/پویا فقط مقادیر عددی می‌پذیرد" data-val-regex-pattern="^\d+$" data-val-required="رمز دوم/پویا الزامی است" id="Pin2" inputmode="numeric" maxlength="12" minlength="5" name="Pin2" placeholder="رمز دوم/پویا" tabindex="0" type="tel">
+            <button id="Pin2VirtualKeypad" name="Pin2VirtualKeypad" type="button" class="action" data-relation="VirtualKeypad" role="button" tabindex="0" aria-label="صفحه کلید امن" aria-pressed="false">
+              <i class="icn-keyboard" aria-hidden="true"></i>
+            </button>
+          </div>
+            <button id="Otp" name="Otp" type="button" class="button fixed-width" data-action="Otp" role="button" tabindex="0">
+              دریافت رمز پویا
+            </button>
+        </div>
+        <span class="field-validation-valid input-wrong" data-valmsg-for="Pin2" data-valmsg-replace="true"></span>
+      </div>
+    </div>
+  <div class="row mless-3x">
+    <div class="col col-12">
+      <button id="Purchase" name="Purchase" type="submit" class="button success full-width" data-focus="Cancel" data-back="Pin2" data-action="Purchase" role="button" tabindex="0">
+        پرداخت
+        1,877,700 ریال
+      </button>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col col-12">
+      <button id="Cancel" name="Cancel" type="button" class="button outline danger full-width" data-action="Cancel" data-back="Purchase" role="button" tabindex="0">
+        انصراف
+      </button>
+    </div>
+  </div>
+  <div class="row mless">
+    <div class="col col-12">
+      <label for="push" class="checkbox circle" data-relation="SendReceipt" tabindex="0" role="button" aria-label="مایلید اطلاعات پرداخت را به صورت ایمیل و پیامک دریافت کنید؟">
+        <input id="push" name="push" type="checkbox">
+        مایلید اطلاعات پرداخت را به صورت ایمیل و پیامک دریافت کنید؟ <small>(اختیاری)</small>
+      </label>
+    </div>
+  </div>
+
+
+<div class="row hide" data-relation="SendReceipt">
+  <div class="col col-12 mless-2x">
+    <label>شماره موبایل و ایمیل خود را وارد کنید <small>(اختیاری)</small></label>
+  </div>
+  <div class="col col-12">
+    <label for="Email">ایمیل</label>
+    <div class="input-holder">
+      <input aria-label="ایمیل" autocomplete="off" class="en" data-back="Pin2" data-focus="CellNumber" data-label="ایمیل" data-name="Email" data-val="true" data-val-email="آدرس پست الکترونیک خود راصحیح وارد نمایید" data-val-length="فیلد آدرس ایمیل حداکثر 255 کاراکتر ظرفیت دارد" data-val-length-max="255" dir="ltr" id="Email" maxlength="255" minlength="5" name="Email" placeholder="mail@domain.com" tabindex="0" type="email">
+      <div class="email-list unselect">
+      </div>
+    </div>
+    <span class="field-validation-valid input-wrong" data-valmsg-for="Email" data-valmsg-replace="true"></span>
+    <input id="SaveMyEmail" name="SaveMyEmail" type="checkbox" class="hide">
+  </div>
+</div>
+
+<div class="row hide" data-relation="SendReceipt">
+  <div class="col col-12">
+    <label for="CellNumber">شماره موبایل</label>
+    <div class="input-holder">
+      <input aria-label="شماره موبایل" autocomplete="off" class="mono" data-back="Email" data-focus="Purchase" data-label="شماره موبایل" data-name="CellNumber" dir="ltr" id="CellNumber" inputmode="numeric" maxlength="11" minlength="11" name="CellNumber" placeholder="09__ ___ ____" tabindex="0" type="tel">
+    </div>
+    <span class="field-validation-valid input-wrong" data-valmsg-for="CellNumber" data-valmsg-replace="true"></span>
+  </div>
+</div>
+
+</form><form action="#" id="frmFailedOtp" method="post">  <input id="Action" name="Action" type="hidden" value="failedotp">
+  <input id="SessionKey" name="SessionKey" type="hidden" value="TomanitDemo01">
+</form>
+      </section>
+    </div>
+  </div>
+</main>
+
+
+  <div class="knowledge">
+        <div class="row" role="note" aria-label="نکته امنیتی">
+          <div class="col col-12">
+            <div class="card">
+              <div class="head">
+                <h2>نکته امنیتی</h2>
+              </div>
+                <ul class="knowledge-list">
+                  <li>دارنده محترم کارت بانکی، با مراجعه به بانک خود یا 
+یکی از روشهای مورد نظر بانک شما، به منظور تایید شماره همراه و پویاسازی 
+رمز دوم کارت خود اقدام نمایید.</li>
+                </ul>
+            </div>
+          </div>
+        </div>
+    <div class="row" role="note" aria-label="راهنمای استفاده از رمز پویا">
+      <div class="col col-12">
+        <div class="card">
+          <div class="head">
+            <h2>راهنمای استفاده از رمز پویا</h2>
+          </div>
+          <ul class="knowledge-list">
+            <li>رمز پویا رمز یک‌بار مصرفی است که به جای رمز دوم کارت استفاده می‌شود.</li>
+            <li>مرحله اول: بر اساس دستورالعمل بانک صادرکننده کارت خود، نسبت به فعال سازی رمز پویا اقدام نمایید.</li>
+            <li>
+              مرحله دوم: رمز پویا را بر اساس روش اعلامی از طرف بانک صادر کننده کارت، به یکی از روش‌های زیر دریافت کنید.
+              <ul class="sublist">
+                <li>1- دریافت از طریق برنامه کاربردی بانک، اینترنت بانک و یا موبایل بانک.</li>
+                <li>2- دریافت از طریق کد USSD بانک صادر کننده کارت شما.</li>
+                <li>3- دریافت از طریق زدن دکمه "دریافت رمز پویا" در درگاه پرداخت اینترنتی.</li>
+              </ul>
+            </li>
+            <li>مرحله سوم: پس از دریافت رمز به یکی از روش‌های فوق، رمز 
+پویای دریافت شده را در محل تعیین شده برای "رمز دوم" وارد نمایید و سپس 
+مابقی اطلاعات را تکمیل نمایید.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="row" role="note" aria-label="راهنما و نکات امنیتی">
+      <div class="col col-12">
+        <div class="card">
+          <div class="head">
+            <h2>راهنما و نکات امنیتی</h2>
+          </div>
+          <ul class="knowledge-list">
+            <li><mark>شماره کارت:</mark> 16 رقمی بوده و بصورت 4 قسمت 4 رقمی روی کارت درج شده است.</li>
+            <li><mark>شماره شناسایی دوم <small class="en">(CVV2)</small>:</mark> شماره شناسایی کارت با طول 3 یا 4 رقم کنار شماره کارت و یا پشت کارت درج شده است.</li>
+            <li><mark>تاریخ انقضا:</mark> شامل دو بخش ماه و سال انقضا در کنار شماره کارت درج شده است.</li>
+            <li><mark>رمز دوم:</mark> با عنوان رمز دوم و در برخی موارد با <span class="en">PIN2</span>
+ شناخته می‌شود، از طریق بانک صادر کننده کارت تولید شده و همچنین از طریق 
+دستگاه‌های خودپرداز بانک صادر کننده قابل تهیه و یا تغییر می‌باشد.</li>
+            <li class="breakline"><mark>کد امنیتی:</mark> بخشی از محتوای
+ صفحه پرداخت است و لازم است برای ادامه فرآیند خرید، کد موجود که به صورت 
+عددی در تصویر مشخص شده است در محل پیش بینی شده درج شود.</li>
+            <li>درگاه پرداخت اینترنتی سپ با استفاده از پروتکل امن SSL به مشتریان خود ارائه خدمت نموده و با آدرس <span class="text-danger">https://sep.shaparak.ir</span>
+ شروع می‌شود. خواهشمند است به منظور جلوگیری از سوء استفاده‌های احتمالی 
+پیش از ورود هرگونه اطلاعات، آدرس موجود در بخش مرورگر وب خود را با آدرس 
+فوق مقایسه نمایید و در صورت مشاهده هر نوع مغایرت احتمالی، موضوع را با ما
+ در میان بگذارید.</li>
+            <li>از صحت نام فروشنده و مبلغ نمایش داده شده، اطمینان حاصل فرمایید.</li>
+            <li>برای جلوگیری از افشای رمز کارت خود، حتی المقدور از صفحه کلید مجازی استفاده فرمایید.</li>
+            <li>برای کسب اطلاعات بیشتر، گزارش فروشگاه‌های مشکوک و همچنین اطلاع از وضعیت پذیرندگان اینترنتی می‌توانید با شماره <a href="tel:+982184080" dir="ltr">021-84080</a> تماس بگیرید و یا از طریق آدرس ایمیل <a href="mailto:info@sep.ir">info@sep.ir</a> اقدام نمایید.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+<div class="dialog" role="dialog" aria-labelledby="dialogTitle" aria-describedby="dialogDescription">
+  <h1 id="dialogTitle">لغو پرداخت</h1>
+  <i class="icn-exit exit-badge" aria-hidden="true"><span class="path1"></span><span class="path2"></span><span class="path3"></span></i>
+  <h2 id="dialogDescription">می‌خواهید پرداخت را لغو کنید؟</h2>
+  <div class="extra">
+    <button id="CancelConfirmed" name="CancelConfirmed" class="button danger full-width" data-action="CancelConfirmed" role="button" tabindex="0" aria-label="لغو پرداخت و خروج">
+      <span>لغو پرداخت و خروج</span>
+    </button>
+    <button id="CancelNeverMind" name="CancelNeverMind" class="button outline full-width" data-action="CancelNeverMind" role="button" tabindex="0" aria-label="ادامه فرآیند پرداخت">
+      <span>ادامه فرآیند پرداخت</span>
+    </button>
+  </div>
+  <i class="icn-xcross xcross" aria-hidden="true"></i>
+<form action="#" id="frmCancel" method="post">  <input id="Action" name="Action" type="hidden" value="cancel">
+  <input id="SessionKey" name="SessionKey" type="hidden" value="TomanitDemo01">
+</form></div>
+
+    </div>
+  </div>
+  <footer class="footer" role="contentinfo" aria-label="Footer">
+  <div class="container">
+    <div class="supervisors">
+      <i class="icn-sep-mono" aria-hidden="true"></i>
+      </div>
+    <div class="trademark">
+      <p>شرکت پرداخت الکترونیک سپ <span class="since">2008 - 2026</span></p>
+    </div>
+    <div class="extra">
+      <p>تمامی حقوق این محصول متعلق به سِپ (پرداخت الکترونیک سامان کیش) می‌باشد.</p>
+      <p>مرکز شبانه روزی ارتباط با مشتریان: <a href="tel:+982184080" class="tel" dir="ltr">021-84080</a></p>
+    </div>
+  </div>
+</footer>
+
+
+  
+  
+  <!--<![endif]-->
+  <script>
+    if (+(/MSIE\s(\d+)/.exec(navigator.userAgent) || 0)[1] <= 9) {
+      document.write("<p><b>Browser not supported!</b> You are using a web browser that does not meet the minimum requirements.</p>");
+    }
+  </script>
+
+
+</body></html>

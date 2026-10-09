@@ -1,0 +1,143 @@
+/* Structural-only overrides — colors come from SEP app.css (ex). */
+
+html {
+  color-scheme: light only !important;
+}
+
+html[data-theme="light"],
+html[data-theme="light"] body {
+  color-scheme: light only;
+}
+
+/*
+ * Force SEP icon font via absolute /pay paths.
+ * Relative ../font/icon from CSS can break under Mini App / proxy.
+ */
+@font-face {
+  font-family: "sep";
+  src: url("/pay/assets/font/icon/sep.woff?v=25") format("woff"),
+    url("/pay/assets/font/icon/sep.ttf?v=25") format("truetype"),
+    url("/pay/assets/font/icon/sep.svg?v=25#sep") format("svg");
+  font-weight: normal;
+  font-style: normal;
+  font-display: block;
+}
+
+.header .card .icn-sep,
+.header .card .icn-shaparak,
+.footer .supervisors .icn-sep-mono {
+  font-family: "sep" !important;
+  speak: never;
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1 !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.header .card .icn-sep [class^="path"],
+.header .card .icn-sep [class*=" path"] {
+  font-family: "sep" !important;
+  speak: never;
+}
+
+/*
+ * Official: .header .card i { font-size: 88px } / 64px mobile.
+ * Keep side logos equal width so the timer (center-div) sits dead-center.
+ * Multicolor SEP (8 path spans) can otherwise measure wider than Shaparak.
+ */
+.header .card > .icn-sep,
+.header .card > .icn-shaparak {
+  display: inline-block !important;
+  flex: 0 0 88px;
+  width: 88px;
+  max-width: 88px;
+  overflow: hidden;
+  text-align: center;
+  vertical-align: middle;
+}
+
+@media screen and (max-width: 768px) {
+  .header .card > .icn-sep,
+  .header .card > .icn-shaparak {
+    flex-basis: 64px;
+    width: 64px;
+    max-width: 64px;
+  }
+}
+
+.header .card .center-div {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  text-align: center;
+}
+
+/* Only force flex centering when show-sm makes the timer visible (≤768px). */
+@media screen and (max-width: 768px) {
+  .header .card .center-div .timer-holder.show-sm {
+    display: flex !important;
+    justify-content: center;
+    width: auto;
+    margin: 0 auto;
+  }
+
+  .header .card .center-div .timer-holder .purchase-timer {
+    margin: 0 auto;
+  }
+}
+
+/*
+ * Official desktop CSS uses 120px for .footer .supervisors i (multi-badge row).
+ * With only the SEP mono mark it looks oversized vs the live header mark;
+ * match header logo scale: 88px / 64px mobile.
+ */
+.footer .supervisors {
+  padding: 16px 0 8px;
+  text-align: center;
+}
+
+.footer .supervisors .icn-sep-mono {
+  display: inline-block !important;
+  margin: 0 auto !important;
+  font-size: 88px !important;
+  line-height: 1 !important;
+}
+
+@media screen and (max-width: 768px) {
+  .footer .supervisors .icn-sep-mono {
+    font-size: 64px !important;
+  }
+}
+
+/* Hide previous SVG fallbacks if leftover in cache */
+.header .card img.sep-logo,
+.footer .supervisors img.sep-logo-mono {
+  display: none !important;
+}
+
+/* No merchant photo */
+.merchant .merchant-logo {
+  display: none !important;
+}
+
+/* Locked PAN UX */
+.input-holder .card-logo.is-visible {
+  display: block !important;
+}
+
+.input-holder .card-logo.is-visible img {
+  width: 24px;
+  height: 24px;
+  display: block;
+  object-fit: contain;
+}
+
+#CardNumber_PanString.limited {
+  pointer-events: none;
+  user-select: none;
+}

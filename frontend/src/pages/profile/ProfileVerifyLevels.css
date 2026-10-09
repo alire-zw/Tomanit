@@ -1,0 +1,218 @@
+.verify-levels {
+  margin: -12px -16px 0;
+  min-height: 100%;
+  overflow-x: hidden;
+  color: var(--text);
+}
+
+.verify-levels__body {
+  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+}
+
+.verify-levels__intro {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+  margin: 2px var(--page-padding-x) 16px;
+  padding: 4px 8px 2px;
+}
+
+.verify-levels__intro-icon {
+  display: inline-flex;
+  color: var(--text);
+  opacity: 0.72;
+}
+
+.verify-levels__desc {
+  margin: 0;
+  padding: 0 4px;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--text-muted);
+  text-wrap: balance;
+}
+
+.verify-levels__loading {
+  margin: 20px var(--page-padding-x) 0;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.verify-levels__section-title {
+  margin: 0 0 10px;
+  padding: 0 var(--page-padding-x);
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.verify-levels__cards {
+  margin: 0 var(--page-padding-x);
+  border-radius: 12px;
+  border: 1px solid var(--border-subtle);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.verify-levels__card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px var(--page-padding-x);
+  background: transparent;
+}
+
+.verify-levels__card--done {
+  background: color-mix(in srgb, var(--success) 8%, transparent);
+}
+
+.verify-levels__card--current:not(.verify-levels__card--done) {
+  background: color-mix(in srgb, var(--accent) 9%, transparent);
+}
+
+.verify-levels__divider {
+  height: 1px;
+  margin: 0;
+  background: var(--border-subtle);
+}
+
+.verify-levels__card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 20px;
+}
+
+.verify-levels__card-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.verify-levels__badge {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 7px;
+  border-radius: 6px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.verify-levels__reqs {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.verify-levels__req {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 18px;
+}
+
+.verify-levels__req-icon {
+  display: grid;
+  place-items: center;
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.verify-levels__req-icon--pending {
+  color: color-mix(in srgb, var(--text-muted) 60%, transparent);
+}
+
+.verify-levels__req-icon--done {
+  color: var(--success);
+}
+
+.verify-levels__req-text {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.35;
+  color: var(--text-muted);
+  text-align: start;
+}
+
+.verify-levels__btn {
+  align-self: stretch;
+  margin-top: 4px;
+  padding: 7px 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  background: var(--surface-elevated);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.verify-levels__btn:active {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border-subtle));
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface-elevated));
+}
+
+/* Light: clearer contrast without shadow */
+[data-theme="light"] .verify-levels__cards {
+  background: #ffffff;
+  border-color: rgba(22, 32, 31, 0.11);
+}
+
+[data-theme="light"] .verify-levels__divider {
+  background: rgba(22, 32, 31, 0.09);
+}
+
+[data-theme="light"] .verify-levels__card--done {
+  background: rgba(34, 163, 74, 0.08);
+}
+
+[data-theme="light"] .verify-levels__card--current:not(.verify-levels__card--done) {
+  background: rgba(13, 148, 136, 0.09);
+}
+
+[data-theme="light"] .verify-levels__badge {
+  background: rgba(13, 148, 136, 0.12);
+  color: #0f766e;
+}
+
+[data-theme="light"] .verify-levels__btn {
+  background: #f0f7f6;
+  border-color: rgba(22, 32, 31, 0.12);
+  color: #16201f;
+}
+
+[data-theme="light"] .verify-levels__btn:active {
+  background: rgba(13, 148, 136, 0.12);
+  border-color: rgba(13, 148, 136, 0.35);
+}
+
+[data-theme="light"] .verify-levels__intro-icon {
+  color: #16201f;
+  opacity: 0.5;
+}
+
+[data-theme="light"] .verify-levels__req-icon--pending {
+  color: rgba(92, 107, 106, 0.5);
+}
+
+[data-theme="light"] .verify-levels__req-text {
+  color: #5c6b6a;
+}
+
+[data-theme="light"] .verify-levels__card-title {
+  color: #16201f;
+}

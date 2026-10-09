@@ -1,0 +1,12 @@
+.toman-page__top {
+  padding-bottom: 4px;
+}
+
+.toman-page__holding-row {
+  align-items: center;
+  padding: 12px;
+}
+
+.toman-page__holding-row .coin-page__holding-logo {
+  align-self: center;
+}

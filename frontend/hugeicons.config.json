@@ -1,0 +1,9 @@
+{
+  "outputDir": "./src/components/icons/hugeicons",
+  "targetPlatform": "react",
+  "defaultStrokeWidth": 1.5,
+  "defaultColor": "currentColor",
+  "defaultSize": 24,
+  "defaultVariant": "bulk-rounded",
+  "variants": ["bulk-rounded", "twotone-rounded"]
+}

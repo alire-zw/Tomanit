@@ -1,0 +1,647 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Default: postgresql. Switch with DB_PROVIDER=mysql|postgresql (npm run db:sync then db:push).
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  user
+  admin
+  supervisor
+}
+
+enum KycLevel {
+  none
+  basic
+  advanced
+}
+
+enum FeeLevel {
+  bronze
+  silver
+  gold
+  platinum
+  vip
+}
+
+enum WalletTxType {
+  deposit
+  withdraw
+  convert
+  recharge
+  invoice
+  fee
+  adjustment
+  refund
+}
+
+enum WalletAsset {
+  toman
+  trx
+  usdt
+  bnb
+  matic
+  gram
+}
+
+enum CryptoNetwork {
+  tron
+  bsc
+  polygon
+  ton
+}
+
+enum WalletTxStatus {
+  pending
+  processing
+  completed
+  failed
+  cancelled
+  rejected
+}
+
+/// How fiat/crypto value entered or left the ledger.
+enum WalletPaymentMethod {
+  crypto
+  card_transfer
+  sheba_transfer
+  payment_gateway
+  internal
+  manual
+}
+
+enum TicketStatus {
+  open
+  answered
+  closed
+}
+
+enum MessageSender {
+  user
+  admin
+}
+
+enum InvoiceStatus {
+  pending
+  paid
+  cancelled
+}
+
+/// User layout aligned with viraltel `users` (+ Tomanit fee/kyc helpers).
+model User {
+  id               Int       @id @default(autoincrement())
+  telegramId       String    @unique @map("telegram_id") @db.VarChar(32)
+  username         String?   @db.VarChar(64)
+  firstName        String?   @map("first_name") @db.VarChar(128)
+  lastName         String?   @map("last_name") @db.VarChar(128)
+  fullName         String?   @map("real_name") @db.VarChar(128)
+  phone            String?   @map("phone_number") @db.VarChar(20)
+  phoneVerifiedAt  DateTime? @map("phone_verified_at")
+  nationalId       String?   @unique @map("national_id") @db.VarChar(10)
+  birthDate        DateTime? @map("birth_date") @db.Date
+  termsAcceptedAt  DateTime? @map("terms_accepted_at")
+  shahkarMatchedAt DateTime? @map("shahkar_matched_at")
+  kycVerifiedAt    DateTime? @map("kyc_verified_at")
+  email            String?   @unique @db.VarChar(255)
+  role             UserRole  @default(user)
+  kycLevel         KycLevel  @default(none)
+  feeLevel         FeeLevel  @default(bronze)
+  isBanned         Boolean   @default(false) @map("is_banned")
+  isActive         Boolean   @default(true) @map("is_active")
+  languageCode     String?   @default("fa") @map("language_code") @db.VarChar(16)
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  wallet             Wallet?
+  walletTransactions WalletTransaction[]
+  depositAddresses   WalletDepositAddress[]
+  supportTickets     SupportTicket[]
+  invoices           Invoice[]
+  bankCards          BankCard[]
+  gatewayCharges     GatewayCharge[]
+  merchantShop       MerchantShop?
+
+  @@map("users")
+}
+
+model Wallet {
+  id           Int      @id @default(autoincrement())
+  userId       Int      @unique @map("user_id")
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tomanBalance BigInt   @default(0) @map("toman_balance")
+  trxBalance   Float    @default(0) @map("trx_balance")
+  usdtBalance  Float    @default(0) @map("usdt_balance")
+  bnbBalance   Float    @default(0) @map("bnb_balance")
+  maticBalance Float    @default(0) @map("matic_balance")
+  gramBalance  Float    @default(0) @map("gram_balance")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  addresses    WalletDepositAddress[]
+
+  @@map("wallets")
+}
+
+model WalletDepositAddress {
+  id            Int           @id @default(autoincrement())
+  userId        Int           @map("user_id")
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade, map: "wallet_deposit_addresses_user_fkey")
+  wallet        Wallet        @relation(fields: [userId], references: [userId], onDelete: Cascade, map: "wallet_deposit_addresses_wallet_fkey")
+  network       CryptoNetwork
+  address       String        @db.VarChar(128)
+  privateKeyEnc String?       @map("private_key_enc") @db.Text
+  /** Last observed native balance (TRX/BNB/MATIC/TON). */
+  lastNative    Float         @default(0) @map("last_native")
+  /** Last observed USDT on this network (0 for ton). */
+  lastUsdt      Float         @default(0) @map("last_usdt")
+  lastCheckedAt DateTime?     @map("last_checked_at")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  @@unique([userId, network])
+  @@index([id])
+  @@map("wallet_deposit_addresses")
+}
+
+/// Unified exchange ledger: crypto/fiat deposit & withdraw, convert, gateway, fees.
+model WalletTransaction {
+  id     Int    @id @default(autoincrement())
+  /** Public reference shown to users (e.g. support / receipt). */
+  code   String @unique @default(cuid()) @db.VarChar(32)
+  userId Int    @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type   WalletTxType
+  status WalletTxStatus @default(pending)
+
+  /** Primary asset of this row (deposit/withdraw asset, or convert *from*). */
+  asset  WalletAsset
+  amount Float
+
+  /** Convert *to* (and optional counter-leg for other paired ops). */
+  counterAsset  WalletAsset? @map("counter_asset")
+  counterAmount Float?       @map("counter_amount")
+
+  /** Spot IRT price of `asset` at booking time (1 for toman). */
+  unitPriceToman Float? @map("unit_price_toman")
+  /** Spot IRT price of `counterAsset` at booking time. */
+  counterUnitPriceToman Float? @map("counter_unit_price_toman")
+  /** Notional value of primary leg in toman. */
+  amountToman Float? @map("amount_toman")
+
+  /** Platform / network fee charged to the user. */
+  feeAsset  WalletAsset? @map("fee_asset")
+  fee       Float?
+  feeToman  Float?       @map("fee_toman")
+
+  /** On-chain / routing */
+  network     CryptoNetwork?
+  fromAddress String?        @map("from_address") @db.VarChar(128)
+  toAddress   String?        @map("to_address") @db.VarChar(128)
+  txHash      String?        @map("tx_hash") @db.VarChar(128)
+  confirmations Int?         @map("confirmations")
+  blockNumber   String?      @map("block_number") @db.VarChar(32)
+
+  /** Fiat / bank / gateway */
+  paymentMethod WalletPaymentMethod? @map("payment_method")
+  bankCardId    Int?                 @map("bank_card_id")
+  bankCard      BankCard?            @relation(fields: [bankCardId], references: [id], onDelete: SetNull)
+  cardNumberMasked String?           @map("card_number_masked") @db.VarChar(19)
+  iban             String?           @db.VarChar(34)
+  depositNumber    String?           @map("deposit_number") @db.VarChar(32)
+  bankName         String?           @map("bank_name") @db.VarChar(128)
+  gatewayName      String?           @map("gateway_name") @db.VarChar(64)
+  gatewayTrackId   String?           @map("gateway_track_id") @db.VarChar(128)
+  gatewayRefId     String?           @map("gateway_ref_id") @db.VarChar(128)
+  gatewayAuthority String?           @map("gateway_authority") @db.VarChar(128)
+
+  /** Links paired rows when needed (legacy dual convert, refunds, etc.). */
+  groupId     String? @map("group_id") @db.VarChar(32)
+  relatedTxId Int?    @map("related_tx_id")
+
+  /** Optional post-balance snapshot for the primary asset. */
+  balanceAfter Float? @map("balance_after")
+
+  note       String? @db.VarChar(255)
+  failReason String? @map("fail_reason") @db.VarChar(255)
+  /** Extra structured payload (explorer meta, gateway raw, AML flags, …). */
+  metadata   Json?
+
+  reviewedBy Int?      @map("reviewed_by")
+  reviewedAt DateTime? @map("reviewed_at")
+
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  completedAt DateTime? @map("completed_at")
+
+  @@index([userId, createdAt])
+  @@index([type, status])
+  @@index([txHash])
+  @@index([groupId])
+  @@index([paymentMethod])
+  @@unique([network, txHash])
+  @@map("wallet_transactions")
+}
+
+model SupportTicket {
+  id          Int          @id @default(autoincrement())
+  code        String       @unique @db.VarChar(32)
+  userId      Int          @map("user_id")
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subject     String       @db.VarChar(160)
+  status      TicketStatus @default(open)
+  autoCloseAt DateTime?    @map("auto_close_at")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+
+  messages SupportMessage[]
+
+  @@index([userId])
+  @@index([autoCloseAt])
+  @@map("support_tickets")
+}
+
+model SupportMessage {
+  id        Int           @id @default(autoincrement())
+  ticketId  Int           @map("ticket_id")
+  ticket    SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  sender    MessageSender
+  body      String        @db.Text
+  imageData String?       @map("image_data") @db.Text
+  createdAt DateTime      @default(now()) @map("created_at")
+
+  @@index([ticketId])
+  @@map("support_messages")
+}
+
+model BankCard {
+  id             Int       @id @default(autoincrement())
+  userId         Int       @map("user_id")
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cardNumber     String    @map("card_number") @db.VarChar(16)
+  iban           String?   @db.VarChar(34)
+  depositNumber  String?   @map("deposit_number") @db.VarChar(32)
+  bankName       String?   @map("bank_name") @db.VarChar(128)
+  bankSlug       String?   @map("bank_slug") @db.VarChar(64)
+  bankBin        String?   @map("bank_bin") @db.VarChar(8)
+  ownerName      String?   @map("owner_name") @db.VarChar(160)
+  isPrimary      Boolean   @default(true) @map("is_primary")
+  isVerified     Boolean   @default(false) @map("is_verified")
+  matchedAt      DateTime? @map("matched_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  transactions   WalletTransaction[]
+  gatewayCharges GatewayCharge[]
+
+  @@unique([userId, cardNumber])
+  @@index([userId])
+  @@map("bank_cards")
+}
+
+model AppSetting {
+  id    Int    @id @default(autoincrement())
+  key   String @unique @db.VarChar(64)
+  value String @db.Text
+
+  @@map("app_settings")
+}
+
+model Invoice {
+  id          Int           @id @default(autoincrement())
+  code        String        @unique @db.VarChar(32)
+  userId      Int           @map("user_id")
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amountToman BigInt        @map("amount_toman")
+  amountTrx   Float?        @map("amount_trx")
+  status      InvoiceStatus @default(pending)
+  description String?       @db.VarChar(255)
+  createdAt   DateTime      @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([status])
+  @@map("invoices")
+}
+
+/// External PSP API backends managed from admin.
+model PaymentGateway {
+  id                   Int       @id @default(autoincrement())
+  displayName          String    @map("display_name") @db.VarChar(128)
+  ownerName            String    @map("owner_name") @db.VarChar(160)
+  /** API base that creates Zibal payment links. */
+  backendBaseUrl       String    @map("backend_base_url") @db.VarChar(512)
+  /** Shared secret sent as Bearer to the gateway backend. */
+  apiKey               String    @map("api_key") @db.VarChar(255)
+  /** Today's completed volume (resets at Tehran midnight). */
+  balanceToman         BigInt    @default(0) @map("balance_toman")
+  /** Today's completed charge count (resets nightly). */
+  todayCount           Int       @default(0) @map("today_count")
+  /** Snapshot of yesterday's volume after nightly reset. */
+  yesterdayVolumeToman BigInt    @default(0) @map("yesterday_volume_toman")
+  yesterdayCount       Int       @default(0) @map("yesterday_count")
+  /** Owner commission percent, e.g. 2.5 */
+  commissionPercent    Float     @default(0) @map("commission_percent")
+  /** Daily volume cap in toman; null = unlimited */
+  dailyLimitToman      BigInt?   @map("daily_limit_toman")
+  /** Daily completed-charge count cap; null = unlimited */
+  dailyCountLimit      Int?      @map("daily_count_limit")
+  /** Per-charge min/max; null = use global charge limits */
+  minAmountToman       Int?      @map("min_amount_toman")
+  maxAmountToman       Int?      @map("max_amount_toman")
+  /** Tehran local hour 0–23; null+null = 24h */
+  openHour             Int?      @map("open_hour")
+  /** Exclusive end hour 1–24 (24 = midnight) */
+  closeHour            Int?      @map("close_hour")
+  /** Comma list of JS getDay() values in Tehran, e.g. "0,1,2,3,4,5,6"; null = all */
+  activeWeekdays       String?   @map("active_weekdays") @db.VarChar(32)
+  ownerTelegramId      String?   @map("owner_telegram_id") @db.VarChar(32)
+  ownerIban            String?   @map("owner_iban") @db.VarChar(34)
+  settlementNote       String?   @map("settlement_note") @db.VarChar(255)
+  consecutiveFailCount Int       @default(0) @map("consecutive_fail_count")
+  lastCapacityAlertAt  DateTime? @map("last_capacity_alert_at")
+  lastFailAlertAt      DateTime? @map("last_fail_alert_at")
+  isActive             Boolean   @default(true) @map("is_active")
+  /** @deprecated unused — kept for DB compatibility */
+  sortOrder            Int       @default(0) @map("sort_order")
+  note                 String?   @db.VarChar(255)
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
+
+  charges    GatewayCharge[]
+  dailyStats GatewayDailyStat[]
+
+  @@map("payment_gateways")
+}
+
+/// Archived daily totals per gateway (Tehran calendar day).
+model GatewayDailyStat {
+  id              Int      @id @default(autoincrement())
+  gatewayId       Int      @map("gateway_id")
+  gateway         PaymentGateway @relation(fields: [gatewayId], references: [id], onDelete: Cascade)
+  /** YYYY-MM-DD in Asia/Tehran */
+  day             String   @db.VarChar(10)
+  volumeToman     BigInt   @default(0) @map("volume_toman")
+  chargeCount     Int      @default(0) @map("charge_count")
+  commissionToman BigInt   @default(0) @map("commission_toman")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@unique([gatewayId, day])
+  @@index([day])
+  @@map("gateway_daily_stats")
+}
+
+enum GatewayChargeStatus {
+  pending
+  completed
+  failed
+  cancelled
+}
+
+enum GatewayChargeKind {
+  wallet_deposit
+  merchant_invoice
+}
+
+/// Hot / master wallet per asset+network. Swept user funds land here; some withdrawals are paid from here.
+model AssetMasterWallet {
+  id            Int           @id @default(autoincrement())
+  asset         WalletAsset
+  network       CryptoNetwork
+  address       String        @db.VarChar(128)
+  privateKeyEnc String        @map("private_key_enc") @db.Text
+  label         String?       @db.VarChar(64)
+  isActive      Boolean       @default(true) @map("is_active")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  @@unique([asset, network])
+  @@index([isActive])
+  @@map("asset_master_wallets")
+}
+
+/// Record for a payment-gateway charge (wallet top-up or merchant invoice).
+model GatewayCharge {
+  id               Int                 @id @default(autoincrement())
+  code             String              @unique @default(cuid()) @db.VarChar(40)
+  kind             GatewayChargeKind   @default(wallet_deposit)
+  userId           Int                 @map("user_id")
+  user             User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gatewayId        Int                 @map("gateway_id")
+  gateway          PaymentGateway      @relation(fields: [gatewayId], references: [id], onDelete: Restrict)
+  bankCardId       Int                 @map("bank_card_id")
+  bankCard         BankCard            @relation(fields: [bankCardId], references: [id], onDelete: Restrict)
+  /** Amount charged at the bank gateway (invoice + fee for merchant invoices). */
+  amountToman      BigInt              @map("amount_toman")
+  /** Invoice face amount credited to the shop (merchant_invoice only). */
+  invoiceAmountToman BigInt?           @map("invoice_amount_toman")
+  /** Platform fee portion (merchant_invoice). */
+  feeToman         BigInt              @default(0) @map("fee_toman")
+  merchantPaymentLinkId Int?           @map("merchant_payment_link_id")
+  merchantPaymentLink   MerchantPaymentLink? @relation(fields: [merchantPaymentLinkId], references: [id], onDelete: SetNull)
+  /** Snapshot of gateway commission % at charge time */
+  commissionPercent Float              @default(0) @map("commission_percent")
+  /** Owner cut in toman (set on success) */
+  commissionToman  BigInt              @default(0) @map("commission_toman")
+  status           GatewayChargeStatus @default(pending)
+  trackId          String?             @map("track_id") @db.VarChar(64)
+  gatewayOrderId   String?             @map("gateway_order_id") @db.VarChar(128)
+  paymentUrl       String?             @map("payment_url") @db.VarChar(512)
+  description      String?             @db.VarChar(255)
+  paidAt           DateTime?           @map("paid_at")
+  /** TRX/IRT rate snapshot at payment success (merchant invoices). */
+  trxRateToman     Float?              @map("trx_rate_toman")
+  walletTxId       Int?                @map("wallet_tx_id")
+  createdAt        DateTime            @default(now()) @map("created_at")
+  updatedAt        DateTime            @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@index([gatewayId])
+  @@index([trackId])
+  @@index([status])
+  @@index([merchantPaymentLinkId])
+  @@index([kind])
+  @@map("gateway_charges")
+}
+
+enum MerchantShopStatus {
+  pending
+  active
+  rejected
+  suspended
+}
+
+enum MerchantSellType {
+  goods
+  services
+}
+
+enum MerchantChannel {
+  website
+  bot
+  manual
+}
+
+/// Merchant shop application / store (one per user for now).
+model MerchantShop {
+  id               Int                @id @default(autoincrement())
+  userId           Int                @unique @map("user_id")
+  user             User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name             String             @db.VarChar(128)
+  sellType         MerchantSellType   @map("sell_type")
+  dailyAmountToman BigInt             @map("daily_amount_toman")
+  dailyCount       Int                @map("daily_count")
+  channel          MerchantChannel
+  siteUrl          String?            @map("site_url") @db.VarChar(512)
+  botUrl           String?            @map("bot_url") @db.VarChar(512)
+  logoData         String?            @map("logo_data") @db.Text
+  /** Invoice UI accent: teal | orange | blue | violet | rose */
+  invoiceTheme     String             @default("teal") @map("invoice_theme") @db.VarChar(16)
+  /** Who pays the 10% invoice fee: payer | merchant | split */
+  feeBearer        String             @default("payer") @map("fee_bearer") @db.VarChar(16)
+  /** Fixed merchant API key — format TomanIt:{shopId}:{token} */
+  apiKey           String?            @unique @map("api_key") @db.VarChar(64)
+  /** Settled merchant balance from manual / API payments (toman). */
+  balanceToman     BigInt             @default(0) @map("balance_toman")
+  /** Report bot: send successful transactions to the owner's chat. */
+  reportBotEnabled  Boolean           @default(false) @map("report_bot_enabled")
+  reportBotChatId   String?           @map("report_bot_chat_id") @db.VarChar(32)
+  reportBotLinkedAt DateTime?         @map("report_bot_linked_at")
+  status           MerchantShopStatus @default(pending)
+  reviewNote       String?            @map("review_note") @db.VarChar(500)
+  reviewedAt       DateTime?          @map("reviewed_at")
+  reviewedById     Int?               @map("reviewed_by_id")
+  createdAt        DateTime           @default(now()) @map("created_at")
+  updatedAt        DateTime           @updatedAt @map("updated_at")
+  paymentLinks     MerchantPaymentLink[]
+  settlements      MerchantShopSettlement[]
+
+  @@index([status])
+  @@index([createdAt])
+  @@map("merchant_shops")
+}
+
+enum MerchantSettlementMethod {
+  rial
+  trx
+}
+
+enum MerchantSettlementStatus {
+  requested
+  processing
+  paid
+  rejected
+}
+
+enum MerchantTrxDestination {
+  in_app
+  external
+}
+
+model MerchantShopSettlement {
+  id             Int                      @id @default(autoincrement())
+  shopId         Int                      @map("shop_id")
+  shop           MerchantShop             @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  method         MerchantSettlementMethod
+  amountToman    BigInt                   @map("amount_toman")
+  status         MerchantSettlementStatus @default(requested)
+  iban           String?                  @db.VarChar(34)
+  trxDestination MerchantTrxDestination?  @map("trx_destination")
+  trxAddress     String?                  @map("trx_address") @db.VarChar(128)
+  rejectNote     String?                  @map("reject_note") @db.VarChar(500)
+  paidAt         DateTime?                @map("paid_at")
+  createdAt      DateTime                 @default(now()) @map("created_at")
+  updatedAt      DateTime                 @updatedAt @map("updated_at")
+
+  @@index([shopId])
+  @@index([shopId, status])
+  @@index([createdAt])
+  @@map("merchant_shop_settlements")
+}
+
+enum MerchantPaymentLinkStatus {
+  open
+  paid
+  cancelled
+  expired
+}
+
+/** Payment invoice — manual hub or merchant web-service API. */
+model MerchantPaymentLink {
+  id              Int                       @id @default(autoincrement())
+  shopId          Int                       @map("shop_id")
+  shop            MerchantShop              @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  code            String                    @unique @db.VarChar(24)
+  title           String                    @db.VarChar(128)
+  amountToman     BigInt                    @map("amount_toman")
+  status          MerchantPaymentLinkStatus @default(open)
+  /** Origin: manual (hub) | api (web-service). Manual list only shows manual. */
+  source          String                    @default("manual") @map("source") @db.VarChar(16)
+  /** Merchant-side order / tracking id (legacy / unused by public API). */
+  orderId         String?                   @map("order_id") @db.VarChar(64)
+  /** Optional payer mobile (API metadata). */
+  payerPhone      String?                   @map("payer_phone") @db.VarChar(20)
+  /** When set, only this Telegram user id may pay the invoice. */
+  payerTelegramId String?                   @map("payer_telegram_id") @db.VarChar(32)
+  /** HTTPS callback — Tomanit POSTs invoice status when payment finishes. */
+  callbackUrl     String?                   @map("callback_url") @db.VarChar(512)
+  paidAt          DateTime?                 @map("paid_at")
+  expiresAt       DateTime?                 @map("expires_at")
+  createdAt       DateTime                  @default(now()) @map("created_at")
+  updatedAt       DateTime                  @updatedAt @map("updated_at")
+  gatewayCharges  GatewayCharge[]
+
+  @@unique([shopId, orderId])
+  @@index([shopId])
+  @@index([shopId, source])
+  @@index([status])
+  @@index([createdAt])
+  @@index([payerTelegramId])
+  @@map("merchant_payment_links")
+}
+
+/** Fixed admin slots: report channel, lock channels/group. */
+enum AdminSystemChannelSlot {
+  admin_report
+  purchase_report
+  notification
+  community_group
+}
+
+model AdminSystemChannel {
+  id         Int                     @id @default(autoincrement())
+  slotKey    AdminSystemChannelSlot  @unique @map("slot_key")
+  chatId     String                  @map("chat_id") @db.VarChar(32)
+  username   String                  @db.VarChar(128)
+  title      String                  @db.VarChar(256)
+  chatType   String                  @default("channel") @map("chat_type") @db.VarChar(32)
+  inviteLink String?                 @map("invite_link") @db.VarChar(512)
+  /** When true (and slot is lockable), users must join before using the app. */
+  isActive   Boolean                 @default(true) @map("is_active")
+  createdAt  DateTime                @default(now()) @map("created_at")
+  updatedAt  DateTime                @updatedAt @map("updated_at")
+
+  @@index([chatId])
+  @@index([isActive])
+  @@map("admin_system_channels")
+}
+
+/** Admin action audit trail (ban, balance, role, fee level, …). */
+model AdminAuditLog {
+  id              Int      @id @default(autoincrement())
+  actorUserId     Int      @map("actor_user_id")
+  actorTelegramId String   @map("actor_telegram_id") @db.VarChar(32)
+  actorRole       UserRole @map("actor_role")
+  action          String   @db.VarChar(64)
+  targetType      String?  @map("target_type") @db.VarChar(32)
+  targetId        String?  @map("target_id") @db.VarChar(64)
+  meta            Json?
+  ip              String?  @db.VarChar(64)
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@index([actorTelegramId, createdAt])
+  @@index([targetType, targetId, createdAt])
+  @@index([createdAt])
+  @@map("admin_audit_logs")
+}

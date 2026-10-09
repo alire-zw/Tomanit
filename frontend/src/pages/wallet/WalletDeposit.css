@@ -1,0 +1,622 @@
+.wallet-deposit {
+  margin: -12px -16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 100%;
+  padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  /* clip avoids creating a scroll container so sticky header works */
+  overflow-x: clip;
+}
+
+.wallet-deposit__header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.wallet-deposit__content {
+  padding-bottom: 8px;
+}
+
+.wallet-deposit__section-title {
+  margin: 6px 0 8px;
+  padding: 0 var(--page-padding-x);
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.wallet-deposit__box {
+  margin: 0 var(--page-padding-x);
+  border-radius: 12px;
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.wallet-deposit__divider {
+  height: 1px;
+  margin: 0 12px;
+  background: var(--border-subtle);
+}
+
+.wallet-deposit__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 56px;
+  margin: 0;
+  padding: 10px 12px;
+  border: none;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.wallet-deposit__item:active {
+  background: color-mix(in srgb, var(--text) 4%, transparent);
+}
+
+.wallet-deposit__item-start {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.wallet-deposit__icons {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+}
+
+.wallet-deposit__icon-big {
+  display: block;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: var(--surface-elevated);
+}
+
+.wallet-deposit__icon-small {
+  position: absolute;
+  inset-inline-end: -3px;
+  bottom: -3px;
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  border: 1.5px solid var(--surface);
+  object-fit: cover;
+  background: var(--surface-elevated);
+}
+
+.wallet-deposit__item-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 0;
+  text-align: start;
+}
+
+.wallet-deposit__item-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.wallet-deposit__item-protocol {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--text-muted);
+  direction: ltr;
+  unicode-bidi: isolate;
+  text-align: start;
+  /* IRANYekanX ss02 maps Latin digits → Persian */
+  -moz-font-feature-settings: "ss02" 0;
+  -webkit-font-feature-settings: "ss02" 0;
+  font-feature-settings: "ss02" 0;
+}
+
+.wallet-deposit__item-sub {
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.4;
+  color: var(--text-muted);
+  text-align: start;
+}
+
+.wallet-deposit__item-chevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--text-muted);
+  opacity: 0.55;
+}
+
+.wallet-deposit__body {
+  padding: 8px var(--page-padding-x) 16px;
+}
+
+.wallet-deposit__address-page {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  padding: 4px var(--page-padding-x) 16px;
+}
+
+.wallet-deposit__qr-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  align-self: center;
+  gap: 8px;
+  width: fit-content;
+  max-width: 100%;
+  padding: 8px 8px 12px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--text) 5%, var(--surface));
+}
+
+.wallet-deposit__qr-frame {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 196px;
+  height: 196px;
+  padding: 14px;
+  border-radius: 12px;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.wallet-deposit__qr-svg {
+  display: block;
+  width: 168px;
+  height: 168px;
+}
+
+.wallet-deposit__qr-logo {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  margin: -18px 0 0 -18px;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 0 0 3px #fff;
+  overflow: hidden;
+}
+
+.wallet-deposit__qr-logo img {
+  display: block;
+  width: 28px;
+  height: 28px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.wallet-deposit__qr-address {
+  display: block;
+  width: 180px;
+  max-width: 100%;
+  margin: 2px 0 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--text);
+  text-align: center;
+  word-break: break-word;
+  white-space: break-spaces;
+  direction: ltr;
+  unicode-bidi: isolate;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  -moz-font-feature-settings: "ss02" 0;
+  -webkit-font-feature-settings: "ss02" 0;
+  font-feature-settings: "ss02" 0;
+}
+
+.wallet-deposit__qr-address:active {
+  opacity: 0.75;
+}
+
+.wallet-deposit__qr-skel {
+  align-self: center;
+  width: 196px;
+  height: 240px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--text) 6%, var(--surface));
+  animation: wallet-deposit-pulse 1.2s ease-in-out infinite;
+}
+
+.wallet-deposit__actions {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 0;
+}
+
+.wallet-deposit__action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 72px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+.wallet-deposit__action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 6px;
+  border-radius: 12px;
+  background: var(--accent-bg);
+  color: var(--accent-contrast);
+}
+
+.wallet-deposit__action:active .wallet-deposit__action-btn {
+  transform: scale(0.96);
+  opacity: 0.92;
+}
+
+.wallet-deposit__action-label {
+  min-height: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--text);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.wallet-deposit__meta {
+  margin: 0;
+  border-radius: 12px;
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.wallet-deposit__meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+  padding: 0 12px;
+  box-sizing: border-box;
+}
+
+.wallet-deposit__meta-row + .wallet-deposit__meta-row {
+  border-top: 1px solid var(--border-subtle);
+}
+
+.wallet-deposit__meta-key {
+  display: inline-flex;
+  align-items: center;
+  font-size: 13px;
+  line-height: 1.2;
+  color: var(--text-muted);
+}
+
+.wallet-deposit__meta-value {
+  display: inline-flex;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--text);
+}
+
+.wallet-deposit__meta-value[lang="en"],
+.wallet-deposit__meta-value--mono {
+  direction: ltr;
+  unicode-bidi: isolate;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  -moz-font-feature-settings: "ss02" 0;
+  -webkit-font-feature-settings: "ss02" 0;
+  font-feature-settings: "ss02" 0;
+}
+
+.wallet-deposit__meta-net {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+  height: 18px;
+  direction: ltr;
+}
+
+.wallet-deposit__meta-net-icon {
+  display: block;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  padding: 0;
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.wallet-deposit__meta-net-icon img {
+  display: block;
+  width: 18px;
+  height: 18px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.wallet-deposit__meta-net-name {
+  display: block;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 18px;
+  height: 18px;
+  direction: ltr;
+  unicode-bidi: isolate;
+  -moz-font-feature-settings: "ss02" 0;
+  -webkit-font-feature-settings: "ss02" 0;
+  font-feature-settings: "ss02" 0;
+}
+
+.wallet-deposit__important {
+  margin-top: 0;
+}
+
+.wallet-deposit__important-title {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.wallet-deposit__tips {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.wallet-deposit__tip {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.wallet-deposit__tip-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  margin-top: 1px;
+  border-radius: 8px;
+  color: var(--warning, #fbbf24);
+  background: color-mix(in srgb, var(--warning, #fbbf24) 12%, transparent);
+}
+
+.wallet-deposit__tip:first-child .wallet-deposit__tip-icon {
+  color: var(--danger, #f87171);
+  background: color-mix(in srgb, var(--danger, #f87171) 12%, transparent);
+}
+
+.wallet-deposit__tip-body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.wallet-deposit__tip-body strong {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.wallet-deposit__tip-body p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+
+.wallet-deposit__address-error--center {
+  align-items: center;
+  align-self: center;
+  text-align: center;
+}
+
+.wallet-deposit__address-card {
+  padding: 16px;
+  border-radius: 14px;
+  border: 1px solid var(--border-subtle);
+  background: var(--surface);
+}
+
+.wallet-deposit__address-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.wallet-deposit__address-logo {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--surface-elevated);
+}
+
+.wallet-deposit__address-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.wallet-deposit__address-protocol {
+  margin-top: 2px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--text-muted);
+  direction: ltr;
+  unicode-bidi: isolate;
+  -moz-font-feature-settings: "ss02" 0;
+  -webkit-font-feature-settings: "ss02" 0;
+  font-feature-settings: "ss02" 0;
+}
+
+.wallet-deposit__hint {
+  margin: 0 0 16px;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+
+.wallet-deposit__address-label {
+  margin: 0 0 6px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.wallet-deposit__address-value {
+  display: block;
+  width: 100%;
+  margin: 0 0 12px;
+  padding: 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  background: var(--surface-elevated);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--text);
+  text-align: start;
+  word-break: break-all;
+  direction: ltr;
+  unicode-bidi: isolate;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.wallet-deposit__address-value:active {
+  opacity: 0.85;
+}
+
+.wallet-deposit__copy-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 42px;
+  margin: 0;
+  padding: 0 16px;
+  border: none;
+  border-radius: 12px;
+  background: var(--accent-bg);
+  color: var(--accent-contrast);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.wallet-deposit__copy-btn:active {
+  opacity: 0.9;
+  transform: scale(0.99);
+}
+
+.wallet-deposit__address-skel {
+  height: 88px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--text) 6%, var(--surface-elevated));
+  animation: wallet-deposit-pulse 1.2s ease-in-out infinite;
+}
+
+.wallet-deposit__address-error {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.wallet-deposit__address-error p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--danger);
+}
+
+.wallet-deposit__retry {
+  margin: 0;
+  padding: 8px 14px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  background: var(--surface-elevated);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+}
+
+@keyframes wallet-deposit-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+

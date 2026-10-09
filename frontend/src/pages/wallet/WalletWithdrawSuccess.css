@@ -1,0 +1,306 @@
+.wallet-wsucc {
+  margin: -12px -16px calc(-12px - env(safe-area-inset-bottom, 0px));
+  height: 100dvh;
+  max-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  color: var(--text);
+  background: var(--bg);
+}
+
+.wallet-wsucc__header {
+  flex-shrink: 0;
+}
+
+.wallet-wsucc__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 8px var(--page-padding-x) 12px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.wallet-wsucc__banner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 18px 14px 16px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  background: var(--surface);
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.wallet-wsucc__banner--error {
+  border-color: color-mix(in srgb, #dc4446 30%, var(--border-subtle));
+  background: color-mix(in srgb, #dc4446 6%, var(--surface));
+}
+
+.wallet-wsucc__mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--accent);
+}
+
+.wallet-wsucc__banner--error .wallet-wsucc__mark {
+  background: color-mix(in srgb, #dc4446 14%, transparent);
+  color: #dc4446;
+}
+
+.wallet-wsucc__mark svg {
+  display: block;
+  width: 26px;
+  height: 26px;
+}
+
+.wallet-wsucc__mark--pending {
+  position: relative;
+}
+
+.wallet-wsucc__mark--pending::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: 16px;
+  border: 2px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  border-top-color: var(--accent);
+  animation: wallet-wsucc-spin 0.9s linear infinite;
+}
+
+@keyframes wallet-wsucc-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.wallet-wsucc__banner-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--text);
+}
+
+.wallet-wsucc__banner-sub {
+  margin: 0;
+  max-width: 280px;
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.wallet-wsucc__meta {
+  margin: 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.wallet-wsucc__meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+  padding: 10px 12px;
+  box-sizing: border-box;
+}
+
+.wallet-wsucc__meta-row + .wallet-wsucc__meta-row {
+  border-top: 1px solid var(--border-subtle);
+}
+
+.wallet-wsucc__meta-key {
+  flex-shrink: 0;
+  font-size: 13px;
+  line-height: 1.2;
+  color: var(--text-muted);
+}
+
+.wallet-wsucc__meta-value {
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.25;
+  color: var(--text);
+  text-align: end;
+}
+
+.wallet-wsucc__meta-value--stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.wallet-wsucc__meta-unit {
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.wallet-wsucc__meta-fiat {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.wallet-wsucc__meta-value--mono {
+  direction: ltr;
+  unicode-bidi: isolate;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-align: left;
+  -moz-font-feature-settings: "ss02" 0;
+  -webkit-font-feature-settings: "ss02" 0;
+  font-feature-settings: "ss02" 0;
+}
+
+.wallet-wsucc__meta-net {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  direction: ltr;
+}
+
+.wallet-wsucc__meta-net img {
+  display: block;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  object-fit: cover;
+}
+
+.wallet-wsucc__error {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, #dc4446 28%, var(--border-subtle));
+  background: color-mix(in srgb, #dc4446 8%, var(--surface));
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 1.45;
+  color: #dc4446;
+}
+
+.wallet-wsucc__actions {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.wallet-wsucc__action-btn {
+  flex: 1 1 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-width: 0;
+  min-height: 46px;
+  margin: 0;
+  padding: 0 10px;
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border-subtle));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface));
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    opacity 0.15s ease,
+    background 0.15s ease,
+    border-color 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+  box-sizing: border-box;
+}
+
+.wallet-wsucc__action-btn span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wallet-wsucc__action-btn svg {
+  flex-shrink: 0;
+  width: 17px;
+  height: 17px;
+  color: var(--accent);
+}
+
+.wallet-wsucc__action-btn:active {
+  transform: scale(0.98);
+  opacity: 0.92;
+  background: color-mix(in srgb, var(--accent) 14%, var(--surface));
+  border-color: color-mix(in srgb, var(--accent) 36%, var(--border-subtle));
+}
+
+.wallet-wsucc__footer {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px var(--page-padding-x) calc(12px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--border-subtle);
+  background: var(--bg);
+}
+
+.wallet-wsucc__cta {
+  width: 100%;
+  min-height: 48px;
+  margin: 0;
+  border: 1px solid var(--accent);
+  border-radius: 12px;
+  background: var(--accent);
+  color: var(--accent-contrast, #fff);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    opacity 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.wallet-wsucc__cta:active:not(:disabled) {
+  transform: scale(0.98);
+  opacity: 0.92;
+}
+
+.wallet-wsucc__cta:disabled {
+  color: color-mix(in srgb, var(--accent) 65%, var(--text-muted));
+  background: color-mix(in srgb, var(--accent) 18%, var(--surface));
+  border-color: color-mix(in srgb, var(--accent) 32%, var(--border-subtle));
+  cursor: not-allowed;
+}
+
+.wallet-wsucc__cta--secondary {
+  color: var(--text);
+  background: var(--surface);
+  border-color: var(--border-subtle);
+}
+
+.wallet-wsucc__cta--secondary:disabled {
+  color: var(--text-muted);
+  background: var(--surface);
+  border-color: var(--border-subtle);
+}

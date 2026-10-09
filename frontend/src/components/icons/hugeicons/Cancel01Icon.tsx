@@ -1,0 +1,31 @@
+
+import React from 'react'
+import {type Variant, type HugeIconProps, defaultStrokeWidth, defaultVariant, defaultColor, defaultSize } from './constants'
+
+const iconMap: Partial<Record<Variant, React.FC<HugeIconProps>>> = { 
+  	'bulk-rounded': BulkRounded,
+	'twotone-rounded': TwotoneRounded,
+}
+
+export default function Cancel01Icon({ variant, ...rest }: HugeIconProps) {
+  const selectedVariant = variant || defaultVariant
+  const Component = iconMap[selectedVariant as Variant] || iconMap[defaultVariant] || BulkRounded
+  return <Component {...rest} />
+}
+
+
+function BulkRounded({ size = defaultSize, color = defaultColor, strokeWidth = defaultStrokeWidth, className, ...rest }: HugeIconProps) {
+  return (<svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"{...rest}>
+<path opacity="0.4" d="M17.2928 5.29297C17.6833 4.90248 18.3163 4.90253 18.7069 5.29297C19.0974 5.6835 19.0974 6.31651 18.7069 6.70704L6.70784 18.7061C6.31731 19.0966 5.6843 19.0966 5.29378 18.7061C4.90332 18.3155 4.90327 17.6825 5.29378 17.292L17.2928 5.29297Z" fill={color}/>
+<path d="M5.29298 5.29273C5.65909 4.92662 6.23809 4.90402 6.63087 5.22437L6.70704 5.29273L18.7061 17.2918L18.7754 17.3679C19.0955 17.7607 19.0721 18.3398 18.7061 18.7058C18.34 19.0718 17.7609 19.0952 17.3682 18.7752L17.292 18.7058L5.29298 6.7068L5.22462 6.63063C4.90427 6.23785 4.92686 5.65885 5.29298 5.29273Z" fill={color}/>
+</svg>
+)
+}
+
+function TwotoneRounded({ size = defaultSize, color = defaultColor, strokeWidth = defaultStrokeWidth, className, ...rest }: HugeIconProps) {
+  return (<svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"{...rest}>
+<path opacity="0.4" d="M18 6L6.00079 17.9992" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round"/>
+<path d="M17.9992 17.9992L6 6" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round"/>
+</svg>
+)
+}

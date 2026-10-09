@@ -1,0 +1,103 @@
+/* Pair row: amount + gateway side by side */
+.wallet-wsucc__meta-row--pair {
+  align-items: stretch;
+  gap: 0;
+}
+
+.wallet-wsucc__pair-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 0;
+  padding-inline-end: 12px;
+}
+
+.wallet-wsucc__pair-item--end {
+  align-items: flex-end;
+  padding-inline-end: 0;
+  padding-inline-start: 12px;
+  border-inline-start: 1px solid var(--border-subtle);
+  text-align: end;
+}
+
+/* Skeleton mirrors WalletWithdrawSuccess layout sizes exactly. */
+
+.wallet-wsucc__banner--skeleton {
+  pointer-events: none;
+}
+
+.wallet-wsucc__skel-mark {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: var(--surface-elevated);
+  animation: wallet-wsucc-skel-pulse 1.2s ease-in-out infinite;
+}
+
+.wallet-wsucc__skel-title {
+  display: block;
+  width: 148px;
+  height: 16px;
+  border-radius: 8px;
+  background: var(--surface-elevated);
+  animation: wallet-wsucc-skel-pulse 1.2s ease-in-out infinite;
+}
+
+.wallet-wsucc__skel-sub {
+  display: block;
+  width: 210px;
+  max-width: 80%;
+  height: 12px;
+  border-radius: 6px;
+  background: var(--surface-elevated);
+  animation: wallet-wsucc-skel-pulse 1.2s ease-in-out infinite;
+  animation-delay: 0.08s;
+}
+
+.wallet-wsucc__meta--skeleton {
+  pointer-events: none;
+}
+
+.wallet-wsucc__skel-key {
+  display: block;
+  width: 64px;
+  height: 12px;
+  border-radius: 6px;
+  background: var(--surface-elevated);
+  animation: wallet-wsucc-skel-pulse 1.2s ease-in-out infinite;
+}
+
+.wallet-wsucc__skel-value {
+  display: block;
+  width: 96px;
+  height: 12px;
+  border-radius: 6px;
+  background: var(--surface-elevated);
+  animation: wallet-wsucc-skel-pulse 1.2s ease-in-out infinite;
+  animation-delay: 0.1s;
+}
+
+.wallet-wsucc__skel-value--wide {
+  width: 128px;
+}
+
+.wallet-wsucc__skel-cta {
+  display: block;
+  width: 100%;
+  min-height: 48px;
+  border-radius: 12px;
+  background: var(--surface-elevated);
+  animation: wallet-wsucc-skel-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes wallet-wsucc-skel-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}

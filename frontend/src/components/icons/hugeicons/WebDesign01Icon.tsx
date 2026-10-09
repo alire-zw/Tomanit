@@ -1,0 +1,34 @@
+
+import React from 'react'
+import {type Variant, type HugeIconProps, defaultStrokeWidth, defaultVariant, defaultColor, defaultSize } from './constants'
+
+const iconMap: Partial<Record<Variant, React.FC<HugeIconProps>>> = { 
+  	'bulk-rounded': BulkRounded,
+	'twotone-rounded': TwotoneRounded,
+}
+
+export default function WebDesign01Icon({ variant, ...rest }: HugeIconProps) {
+  const selectedVariant = variant || defaultVariant
+  const Component = iconMap[selectedVariant as Variant] || iconMap[defaultVariant] || BulkRounded
+  return <Component {...rest} />
+}
+
+
+function BulkRounded({ size = defaultSize, color = defaultColor, strokeWidth = defaultStrokeWidth, className, ...rest }: HugeIconProps) {
+  return (<svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"{...rest}>
+<path opacity="0.4" d="M21.7148 8.75C21.7491 9.67949 21.75 10.7433 21.75 11.958V12.042C21.75 14.1221 21.75 15.7597 21.5781 17.0381C21.4022 18.3464 21.0334 19.3904 20.2119 20.2119C19.3904 21.0334 18.3464 21.4022 17.0381 21.5781C15.7597 21.75 14.1221 21.75 12.042 21.75H11.958C11.1581 21.75 10.4237 21.7461 9.75 21.7363V8.75H21.7148ZM8.25 21.6914C7.78487 21.6661 7.35626 21.6311 6.96191 21.5781C5.65356 21.4022 4.60957 21.0334 3.78809 20.2119C2.9666 19.3904 2.59783 18.3464 2.42188 17.0381C2.25 15.7597 2.24999 14.1221 2.25 12.042V11.958C2.25 10.7433 2.25093 9.67949 2.28516 8.75H8.25V21.6914Z" fill={color}/>
+<path d="M15 15.25C15.4142 15.25 15.75 15.5858 15.75 16C15.75 16.4142 15.4142 16.75 15 16.75H13C12.5858 16.75 12.25 16.4142 12.25 16C12.25 15.5858 12.5858 15.25 13 15.25H15ZM17 11.25C17.4142 11.25 17.75 11.5858 17.75 12C17.75 12.4142 17.4142 12.75 17 12.75H13C12.5858 12.75 12.25 12.4142 12.25 12C12.25 11.5858 12.5858 11.25 13 11.25H17ZM12.042 2.25C14.1221 2.24999 15.7597 2.25 17.0381 2.42188C18.3464 2.59783 19.3904 2.9666 20.2119 3.78809C21.0334 4.60957 21.4022 5.65356 21.5781 6.96191C21.5908 7.05592 21.6005 7.15208 21.6113 7.25H2.38867C2.39952 7.15208 2.40924 7.05592 2.42188 6.96191C2.59783 5.65356 2.9666 4.60957 3.78809 3.78809C4.60957 2.9666 5.65356 2.59783 6.96191 2.42188C8.24033 2.25 9.87786 2.24999 11.958 2.25H12.042Z" fill={color}/>
+</svg>
+)
+}
+
+function TwotoneRounded({ size = defaultSize, color = defaultColor, strokeWidth = defaultStrokeWidth, className, ...rest }: HugeIconProps) {
+  return (<svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"{...rest}>
+<path d="M3 12C3 7.75736 3 5.63604 4.31802 4.31802C5.63604 3 7.75736 3 12 3C16.2426 3 18.364 3 19.682 4.31802C21 5.63604 21 7.75736 21 12C21 16.2426 21 18.364 19.682 19.682C18.364 21 16.2426 21 12 21C7.75736 21 5.63604 21 4.31802 19.682C3 18.364 3 16.2426 3 12Z" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round"/>
+<path d="M3.5 8H20.5" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round"/>
+<path opacity="0.4" d="M13 12L17 12" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round"/>
+<path opacity="0.4" d="M13 16H15" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round"/>
+<path opacity="0.4" d="M9 8V21" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round"/>
+</svg>
+)
+}

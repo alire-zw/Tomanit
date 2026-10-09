@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build
+dist/
+**/dist/
+build/
+**/build/
+*.tsbuildinfo
+
+# Env / secrets
+.env
+.env.*
+!**/.env.example
+**/wallet-inspect.json
+
+# Logs & OS
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# Misc
+tmp/
+coverage/
+.cache/

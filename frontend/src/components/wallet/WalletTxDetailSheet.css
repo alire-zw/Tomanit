@@ -1,0 +1,114 @@
+.wallet-tx-detail-sheet .bottom-sheet__body {
+  padding-top: 4px;
+  padding-bottom: var(--overlay-bottom-inset);
+}
+
+.wallet-tx-detail__card {
+  padding: 2px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border-subtle);
+  background: var(--surface);
+}
+
+.wallet-tx-detail__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px 0;
+}
+
+.wallet-tx-detail__row + .wallet-tx-detail__row {
+  border-top: 1px solid var(--border-subtle);
+}
+
+.wallet-tx-detail__label {
+  flex-shrink: 0;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.wallet-tx-detail__value {
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 5px;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  text-align: end;
+  word-break: break-word;
+}
+
+.wallet-tx-detail__value--mono {
+  direction: ltr;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
+  font-size: 11px;
+  font-weight: 500;
+  font-variant-numeric: lining-nums tabular-nums;
+  letter-spacing: 0.01em;
+  unicode-bidi: isolate;
+  color: var(--text);
+  /* IRANYekanX ss02 maps Latin digits → Persian; force Latin glyphs. */
+  -moz-font-feature-settings: "ss02" 0;
+  -webkit-font-feature-settings: "ss02" 0;
+  font-feature-settings: "ss02" 0;
+}
+
+.wallet-tx-detail__value--copyable {
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  /* Do not use `font: inherit` — it restores IRANYekanX + ss02 Persian digits. */
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  color: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  text-align: end;
+}
+
+.wallet-tx-detail__value--mono.wallet-tx-detail__value--copyable {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
+  font-size: 11px;
+  font-weight: 500;
+  -moz-font-feature-settings: "ss02" 0;
+  -webkit-font-feature-settings: "ss02" 0;
+  font-feature-settings: "ss02" 0;
+}
+
+.wallet-tx-detail__value--copyable:active {
+  opacity: 0.7;
+}
+
+.wallet-tx-detail__value--amount {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+.wallet-tx-detail__unit {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.wallet-tx-detail__value--completed {
+  color: var(--accent);
+}
+
+.wallet-tx-detail__value--pending,
+.wallet-tx-detail__value--processing {
+  color: var(--warning, #f59e0b);
+}
+
+.wallet-tx-detail__value--failed,
+.wallet-tx-detail__value--cancelled,
+.wallet-tx-detail__value--rejected {
+  color: #dc4446;
+}

@@ -1,0 +1,1066 @@
+/* Invoice pay — full-bleed split: 70% accent / 30% bg → swap to 50/50 */
+
+.mpay {
+  --mpay-swap-ease: cubic-bezier(0.65, 0.05, 0.36, 1);
+  --mpay-swap-ms: 900ms;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  /* Fallback when not inside .app--pay-bleed */
+  margin: -12px -16px calc(-12px - env(safe-area-inset-bottom, 0px));
+  width: calc(100% + 32px);
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+}
+
+.app--pay-bleed .mpay {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  max-height: 100%;
+}
+
+/* Neutral shell until invoice theme is known (avoids teal flash). */
+.mpay--boot .mpay__band--accent,
+.mpay--boot .mpay__band--surface {
+  background: var(--bg);
+  transition: none;
+}
+
+.mpay--boot .mpay__top,
+.mpay--boot .mpay__bottom {
+  opacity: 0;
+}
+
+.mpay__bands {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.mpay__band {
+  position: absolute;
+  left: 0;
+  right: 0;
+  will-change: top, height;
+  transition:
+    top var(--mpay-swap-ms) var(--mpay-swap-ease),
+    height var(--mpay-swap-ms) var(--mpay-swap-ease);
+}
+
+.mpay__band--accent {
+  top: 0;
+  height: 70%;
+  z-index: 1;
+  background: var(--accent);
+}
+
+.mpay__band--surface {
+  top: 70%;
+  height: 30%;
+  z-index: 0;
+  background: var(--surface);
+}
+
+.mpay--next .mpay__band--accent {
+  top: 50%;
+  height: 50%;
+  z-index: 0;
+}
+
+.mpay--next .mpay__band--surface {
+  top: 0;
+  height: 50%;
+  z-index: 1;
+}
+
+.mpay__top {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 70%;
+  background: transparent;
+  color: var(--accent-contrast, #fff);
+  transition: flex-basis var(--mpay-swap-ms) var(--mpay-swap-ease);
+}
+
+.mpay--next .mpay__top {
+  flex-basis: 50%;
+  color: var(--text);
+}
+
+/* Checkout summary — white band after color swap */
+.mpay__checkout {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+  box-sizing: border-box;
+  padding: 52px 22px 26px;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(14px);
+  transition:
+    opacity 520ms cubic-bezier(0.4, 0, 0.2, 1),
+    transform 720ms var(--mpay-swap-ease);
+}
+
+.mpay__checkout--in {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+  transition-delay: 280ms, 280ms;
+}
+
+.mpay__checkout-close {
+  position: absolute;
+  top: 10px;
+  left: 14px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.15s ease, opacity 0.15s ease, color 0.15s ease;
+}
+
+.mpay__checkout-close:active {
+  transform: scale(0.94);
+  opacity: 0.8;
+}
+
+.mpay__checkout-close svg {
+  display: block;
+  width: 24px;
+  height: 24px;
+}
+
+.mpay__checkout-close svg path {
+  opacity: 1 !important;
+  fill: currentColor !important;
+}
+
+.mpay__checkout-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+}
+
+.mpay__checkout-kicker {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1.3;
+  color: var(--text-muted);
+}
+
+.mpay__checkout-amount {
+  display: inline-flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0;
+}
+
+.mpay__checkout-amount-value {
+  direction: ltr;
+  unicode-bidi: isolate;
+  font-size: clamp(40px, 11vw, 52px);
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.mpay__checkout-amount-unit {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* Continuous line + arrow sitting on it (slightly right of center) */
+.mpay__flow {
+  position: relative;
+  direction: ltr;
+  flex: 0 0 auto;
+  width: 100%;
+  height: 22px;
+  margin: 2px 0;
+}
+
+.mpay__flow-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  display: block;
+  height: 1px;
+  transform: translateY(-50%);
+  background: color-mix(in srgb, var(--text-muted) 38%, var(--border-subtle));
+}
+
+.mpay__flow-icon {
+  position: absolute;
+  top: 50%;
+  left: 78%;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 26px;
+  height: 26px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  transform: translate(-50%, -50%);
+}
+
+.mpay__flow-icon svg {
+  display: block;
+  width: 18px;
+  height: 18px;
+}
+
+.mpay__flow-icon svg path {
+  opacity: 1 !important;
+  fill: currentColor !important;
+}
+
+.mpay__checkout-block--card-error {
+  animation: mpay-card-shake 420ms ease;
+}
+
+.mpay__checkout-block--card-error .mpay__checkout-kicker,
+.mpay__checkout-block--card-error .mpay__card-bank,
+.mpay__checkout-block--card-error .mpay__card-mask,
+.mpay__checkout-block--card-error .mpay__card-row > svg {
+  color: var(--danger, #ef4444);
+}
+
+.mpay__checkout-block--card-error .mpay__card-row > svg path {
+  fill: var(--danger, #ef4444) !important;
+}
+
+@keyframes mpay-card-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-6px);
+  }
+  40% {
+    transform: translateX(6px);
+  }
+  60% {
+    transform: translateX(-4px);
+  }
+  80% {
+    transform: translateX(3px);
+  }
+}
+
+.mpay__card-row {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 12px;
+  width: 100%;
+  margin: 2px 0 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mpay__card-row--empty {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.mpay__card-row--skel {
+  pointer-events: none;
+}
+
+.mpay__card-row:active {
+  opacity: 0.86;
+}
+
+.mpay__card-logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 58px;
+  height: 58px;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.mpay__card-logo img {
+  display: block;
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+
+.mpay__card-row-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 0;
+  text-align: start;
+}
+
+.mpay__card-bank {
+  width: 100%;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: start;
+}
+
+.mpay__card-mask {
+  direction: ltr;
+  unicode-bidi: isolate;
+  align-self: flex-start;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.25;
+  color: var(--text-muted);
+  text-align: start;
+  font-variant-numeric: tabular-nums;
+}
+
+.mpay__card-row > svg {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  color: color-mix(in srgb, var(--text-muted) 80%, transparent);
+}
+
+.mpay__card-row > svg path {
+  opacity: 1 !important;
+  fill: currentColor !important;
+}
+
+.mpay__skel--card-logo {
+  width: 58px;
+  height: 58px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--text-muted) 22%, var(--surface));
+}
+
+.mpay__skel--card-name {
+  width: 140px;
+  height: 15px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--text-muted) 30%, var(--surface));
+}
+
+.mpay__skel--card-mask {
+  width: 72px;
+  height: 12px;
+  margin-top: 2px;
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--text-muted) 22%, var(--surface));
+  animation-delay: 0.08s;
+}
+
+.mpay__bottom {
+  position: relative;
+  z-index: 2;
+  flex: 0 0 30%;
+  display: flex;
+  align-items: center;
+  padding: 18px 20px calc(18px + env(safe-area-inset-bottom, 0px));
+  background: transparent;
+  color: var(--text);
+  box-sizing: border-box;
+  transition: flex-basis var(--mpay-swap-ms) var(--mpay-swap-ease);
+}
+
+.mpay--next .mpay__bottom {
+  flex-basis: 50%;
+  color: var(--accent-contrast, #fff);
+}
+
+/* Green-band: details+rule top, confirm centered, hint bottom */
+.mpay__summary {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 0;
+  box-sizing: border-box;
+  padding: 22px 22px max(16px, calc(10px + env(safe-area-inset-bottom, 0px)));
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(14px);
+  transition:
+    opacity 520ms cubic-bezier(0.4, 0, 0.2, 1),
+    transform 720ms var(--mpay-swap-ease);
+}
+
+.mpay__summary--in {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+  transition-delay: 280ms, 280ms;
+}
+
+/* Rows + rule (same gap rhythm as upper checkout) */
+.mpay__summary-main {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+/* Button sits exactly midway between rule and disclaimer */
+.mpay__summary-action {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  min-height: 0;
+  width: 100%;
+}
+
+.mpay__summary-rows {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+}
+
+.mpay__summary-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+}
+
+.mpay__summary-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1.35;
+  color: color-mix(in srgb, var(--accent-contrast, #fff) 62%, transparent);
+}
+
+.mpay__summary-value {
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  flex: 0 0 auto;
+  gap: 6px;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--accent-contrast, #fff);
+  text-align: end;
+}
+
+.mpay__summary-value--strong {
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.mpay__summary-num {
+  direction: ltr;
+  unicode-bidi: isolate;
+  font-variant-numeric: tabular-nums;
+}
+
+.mpay__summary-unit {
+  font-size: 13px;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--accent-contrast, #fff) 72%, transparent);
+}
+
+/* Same footprint as .mpay__flow under amount */
+.mpay__summary-mid {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 22px;
+  margin: 2px 0;
+}
+
+.mpay__summary-rule {
+  width: 100%;
+  height: 1px;
+  margin: 0;
+  background: color-mix(in srgb, var(--accent-contrast, #fff) 42%, transparent);
+}
+
+.mpay__summary-confirm {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 14px;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #fbbf24;
+  font: inherit;
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  text-align: start;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mpay__summary-confirm:active > span {
+  opacity: 0.78;
+}
+
+.mpay__summary-confirm:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.mpay__summary-confirm svg {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  color: #fbbf24 !important;
+  opacity: 1 !important;
+}
+
+.mpay__summary-confirm svg path {
+  fill: #fbbf24 !important;
+  opacity: 1 !important;
+}
+
+.mpay__summary-disclaimer {
+  flex: 0 0 auto;
+  margin: 0;
+  max-width: 36em;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  line-height: 1.55;
+  color: color-mix(in srgb, var(--accent-contrast, #fff) 55%, transparent);
+}
+
+.mpay__intro-fade {
+  position: relative;
+  width: 100%;
+  opacity: 1;
+  transform: translateY(0);
+  transition:
+    opacity 480ms cubic-bezier(0.4, 0, 0.2, 1) 60ms,
+    transform 780ms var(--mpay-swap-ease);
+}
+
+.mpay__top > .mpay__intro-fade {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 100%;
+  height: 100%;
+}
+
+.mpay__intro-fade--out {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-12px);
+}
+
+.mpay__bottom > .mpay__intro-fade.mpay__intro-fade--out {
+  transform: translateY(14px);
+  transition-delay: 40ms, 40ms;
+}
+
+.mpay__topbar {
+  position: absolute;
+  z-index: 2;
+  top: 14px;
+  left: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  direction: ltr;
+}
+
+.mpay__chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  height: 32px;
+  min-width: 32px;
+  padding: 0 10px;
+  border: 1px solid color-mix(in srgb, var(--accent-contrast, #fff) 28%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--accent-contrast, #fff) 10%, transparent);
+  color: var(--accent-contrast, #fff);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.mpay__chip--icon {
+  width: 32px;
+  padding: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.mpay__chip--icon svg {
+  display: block;
+  flex-shrink: 0;
+}
+
+.mpay__chip--icon svg path {
+  opacity: 1 !important;
+  fill: currentColor !important;
+}
+
+.mpay__chip--icon:active {
+  transform: scale(0.96);
+  opacity: 0.88;
+}
+
+.mpay__chip--icon:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.mpay__chip--id {
+  direction: ltr;
+  unicode-bidi: isolate;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  letter-spacing: 0.03em;
+}
+
+.mpay__copy {
+  position: absolute;
+  inset-inline: 20px;
+  top: 20%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  text-align: start;
+}
+
+.mpay__hello {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.35;
+}
+
+.mpay__hello svg {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+}
+
+.mpay__label {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.35;
+  color: var(--accent-contrast, #fff);
+}
+
+.mpay__amount-row {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 4px 0 0;
+}
+
+.mpay__amount-value {
+  direction: ltr;
+  unicode-bidi: isolate;
+  font-size: clamp(42px, 11vw, 52px);
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  color: #fbbf24;
+  font-variant-numeric: tabular-nums;
+}
+
+.mpay__amount-unit {
+  font-size: 15px;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--accent-contrast, #fff) 62%, transparent);
+}
+
+.mpay__actions {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 0 20px 22px;
+}
+
+.mpay__text-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  width: 100%;
+  margin: 0;
+  padding: 18px 0;
+  border: none;
+  background: transparent;
+  color: var(--accent-contrast, #fff);
+  font: inherit;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.35;
+  text-align: start;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mpay__text-action:active > span {
+  opacity: 0.78;
+}
+
+.mpay__text-action--muted {
+  color: color-mix(in srgb, var(--accent-contrast, #fff) 78%, transparent);
+  font-weight: 650;
+}
+
+.mpay__text-action svg {
+  flex-shrink: 0;
+  width: 23px;
+  height: 23px;
+  color: #fbbf24 !important;
+  opacity: 1 !important;
+}
+
+.mpay__text-action svg path {
+  fill: #fbbf24 !important;
+  opacity: 1 !important;
+}
+
+.mpay__actions-rule {
+  width: 100%;
+  height: 1px;
+  margin: 6px 0;
+  background: color-mix(in srgb, var(--accent-contrast, #fff) 62%, transparent);
+  opacity: 0.85;
+}
+
+/* Shop — clean vertical stack, no card */
+.mpay__shop {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 0;
+}
+
+.mpay__shop-head {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr) auto;
+  align-items: start;
+  column-gap: 12px;
+}
+
+.mpay__shop-avatar {
+  display: inline-flex;
+  width: 58px;
+  height: 58px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+}
+
+.mpay__shop-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.mpay__shop-avatar-fallback {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--accent);
+}
+
+.mpay__shop-title {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-self: center;
+  gap: 3px;
+  min-width: 0;
+  text-align: start;
+}
+
+.mpay__shop-kicker {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  color: var(--text-muted);
+}
+
+.mpay__shop-name {
+  margin: 0;
+  min-width: 0;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mpay__channel-btn {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  align-self: start;
+  gap: 5px;
+  box-sizing: border-box;
+  height: 30px;
+  margin: 0;
+  padding: 0 10px;
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border-subtle));
+  /* Same corner proportion as shop avatar (14/58 ≈ 0.24 → ~7px); keep square-ish, not pill */
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  color: var(--accent);
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.mpay__channel-btn:active {
+  transform: scale(0.97);
+  opacity: 0.9;
+}
+
+.mpay__channel-btn--static {
+  cursor: default;
+}
+
+.mpay__channel-btn--static:active {
+  transform: none;
+  opacity: 1;
+}
+
+.mpay__channel-btn svg {
+  flex-shrink: 0;
+}
+
+.mpay__shop-rule {
+  width: 100%;
+  height: 1px;
+  background: var(--border-subtle);
+  opacity: 0.9;
+}
+
+.mpay__shop-facts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 16px;
+  align-items: start;
+}
+
+.mpay__shop-fact {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  text-align: start;
+}
+
+.mpay__shop-fact-label {
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--text-muted);
+}
+
+.mpay__shop-fact-value {
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Skeleton — keep shell visible, pulse placeholders for async fields */
+.mpay__skel {
+  display: block;
+  border-radius: 8px;
+  pointer-events: none;
+  animation: mpay-skel-pulse 1.2s ease-in-out infinite;
+}
+
+.mpay__chip--skel {
+  width: 96px;
+  min-width: 96px;
+  padding: 0 8px;
+  pointer-events: none;
+}
+
+.mpay__skel--id {
+  width: 100%;
+  height: 10px;
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--accent-contrast, #fff) 32%, transparent);
+}
+
+.mpay__skel--amount {
+  width: min(52vw, 180px);
+  height: 44px;
+  border-radius: 12px;
+  background: color-mix(in srgb, #fbbf24 38%, transparent);
+}
+
+.mpay__skel--unit {
+  width: 42px;
+  height: 14px;
+  border-radius: 6px;
+  align-self: center;
+  background: color-mix(in srgb, var(--accent-contrast, #fff) 28%, transparent);
+  animation-delay: 0.08s;
+}
+
+.mpay__shop--skel {
+  width: 100%;
+  pointer-events: none;
+}
+
+.mpay__skel--avatar {
+  width: 58px;
+  height: 58px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--text-muted) 22%, var(--surface));
+}
+
+.mpay__skel--kicker {
+  width: 48px;
+  height: 10px;
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--text-muted) 28%, var(--surface));
+}
+
+.mpay__skel--name {
+  width: min(48vw, 140px);
+  height: 15px;
+  margin-top: 4px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--text-muted) 34%, var(--surface));
+  animation-delay: 0.06s;
+}
+
+.mpay__skel--channel {
+  width: 72px;
+  height: 30px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--accent) 18%, var(--surface));
+  animation-delay: 0.1s;
+}
+
+.mpay__skel--fact-label {
+  width: 56px;
+  height: 10px;
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--text-muted) 26%, var(--surface));
+}
+
+.mpay__skel--fact-value {
+  width: 72px;
+  height: 13px;
+  margin-top: 4px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--text-muted) 32%, var(--surface));
+  animation-delay: 0.08s;
+}
+
+.mpay__text-action:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+@keyframes mpay-skel-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}

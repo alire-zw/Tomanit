@@ -1,0 +1,25 @@
+# Tomanit Merchant API
+
+> Machine-readable API documentation for AI agents and developers.
+
+## Primary OpenAPI (JSON)
+
+- Live (recommended): https://vtb.mirall.ir/merchant/v1/openapi.json
+- Static mirror: /openapi/merchant-api.json
+
+## Human docs
+
+- https://vt.mirall.ir/docs/merchant-api
+
+## Auth
+
+Authorization: Bearer TomanIt:{shopId}:{token}
+
+## Endpoints
+
+- POST /merchant/v1/invoices — create invoice
+- GET /merchant/v1/invoices/{ref} — invoice status (payToken or INV-code)
+
+## Callbacks
+
+HTTPS POST to merchant callbackUrl with events: invoice.paid | invoice.failed

@@ -1,0 +1,329 @@
+/* Admin channels — minimal list aligned with admin hub menu */
+
+.admin-sys-ch__menu {
+  margin: 0 var(--page-padding-x);
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.admin-sys-ch__menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 58px;
+  padding: 10px 12px;
+  border-top: 1px solid var(--border-subtle);
+  box-sizing: border-box;
+}
+
+.admin-sys-ch__menu-item:first-child {
+  border-top: none;
+}
+
+.admin-sys-ch__menu-item.is-off {
+  opacity: 0.72;
+}
+
+.admin-sys-ch__menu-copy {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.admin-sys-ch__menu-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-sys-ch__menu-hint {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  direction: ltr;
+  unicode-bidi: isolate;
+  text-align: start;
+}
+
+.admin-sys-ch__menu-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.admin-sys-ch__icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.admin-sys-ch__icon-btn:active {
+  transform: scale(0.95);
+}
+
+.admin-sys-ch__icon-btn.is-on {
+  color: #fb7185;
+  border-color: color-mix(in srgb, #fb7185 28%, var(--border-subtle));
+  background: color-mix(in srgb, #fb7185 10%, var(--surface));
+}
+
+.admin-sys-ch__icon-btn.is-off {
+  color: var(--text-muted);
+}
+
+.admin-sys-ch__icon-btn.is-danger {
+  color: var(--danger, #ef4444);
+}
+
+.admin-sys-ch__icon-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.admin-sys-ch__add-btn {
+  height: 30px;
+  padding: 0 12px;
+  border: none;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  color: color-mix(in srgb, var(--accent) 88%, var(--text));
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.admin-sys-ch__add-btn:active {
+  transform: scale(0.96);
+}
+
+.admin-sys-ch__add {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0 var(--page-padding-x);
+  padding-bottom: 16px;
+}
+
+.admin-sys-ch__section-title {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.admin-sys-ch__card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  background: var(--surface);
+  box-sizing: border-box;
+}
+
+.admin-sys-ch__step {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.admin-sys-ch__step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  margin-top: 1px;
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  color: color-mix(in srgb, var(--accent) 88%, var(--text));
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.admin-sys-ch__step-text {
+  margin: 0;
+  min-width: 0;
+  font-size: 12.5px;
+  font-weight: 400;
+  line-height: 1.55;
+  color: var(--text-secondary);
+}
+
+.admin-sys-ch__error {
+  font-size: 12px;
+  color: var(--danger, #ef4444);
+}
+
+.admin-sys-ch__btn {
+  width: 100%;
+  height: 36px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 10px;
+  background: var(--accent-bg, var(--accent));
+  color: var(--accent-contrast, #fff);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.admin-sys-ch__btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.admin-sys-ch__btn--ghost {
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  color: color-mix(in srgb, var(--accent) 90%, var(--text));
+}
+
+.admin-sys-ch__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.admin-sys-ch__field-label {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.admin-sys-ch__input {
+  width: 100%;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  background: var(--input-bg, color-mix(in srgb, var(--bg) 70%, var(--surface)));
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  outline: none;
+  box-sizing: border-box;
+  text-align: left;
+  direction: ltr;
+}
+
+.admin-sys-ch__input:focus {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border-subtle));
+}
+
+.admin-sys-ch__empty {
+  margin: 24px var(--page-padding-x);
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.admin-sys-ch__menu-item--skel,
+.admin-sys-ch__card--skel {
+  pointer-events: none;
+}
+
+.admin-sys-ch__skel {
+  display: block;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--text-muted) 14%, var(--bg));
+  animation: admin-sys-ch-pulse 1.2s ease-in-out infinite;
+}
+
+.admin-sys-ch__skel--title {
+  width: 42%;
+  max-width: 140px;
+  height: 12px;
+}
+
+.admin-sys-ch__skel--hint {
+  width: 58%;
+  max-width: 180px;
+  height: 10px;
+  margin-top: 2px;
+}
+
+.admin-sys-ch__skel--action {
+  width: 56px;
+  height: 30px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.admin-sys-ch__skel--section {
+  width: 72px;
+  height: 10px;
+}
+
+.admin-sys-ch__skel--num {
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  flex-shrink: 0;
+}
+
+.admin-sys-ch__skel--step {
+  width: 100%;
+  height: 34px;
+  border-radius: 8px;
+}
+
+.admin-sys-ch__skel--step-sm {
+  height: 28px;
+}
+
+.admin-sys-ch__skel--label {
+  width: 88px;
+  height: 10px;
+}
+
+.admin-sys-ch__skel--input {
+  width: 100%;
+  height: 40px;
+  border-radius: 10px;
+}
+
+.admin-sys-ch__skel--btn {
+  width: 100%;
+  height: 36px;
+  border-radius: 10px;
+}
+
+@keyframes admin-sys-ch-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}

@@ -1,0 +1,185 @@
+.wallet-toman-withdraw {
+  padding: 0 var(--page-padding-x);
+}
+
+.wallet-toman-withdraw__balance {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 4px 0 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.wallet-toman-withdraw__balance-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
+}
+
+.wallet-toman-withdraw__balance-title p {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.wallet-toman-withdraw__balance-title svg {
+  display: block;
+  opacity: 0.75;
+}
+
+.wallet-toman-withdraw__balance-value {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+  unicode-bidi: isolate;
+}
+
+.wallet-toman-withdraw__balance-unit {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.wallet-toman-withdraw .wallet-deposit__section-title {
+  padding: 0;
+  margin: 0 0 8px;
+  font-size: 12px;
+}
+
+.wallet-toman-withdraw__list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.wallet-toman-withdraw__block {
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.wallet-toman-withdraw__row {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.wallet-toman-withdraw__row:active {
+  background: color-mix(in srgb, var(--text) 4%, transparent);
+}
+
+.wallet-toman-withdraw__row-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 64px;
+  padding: 12px;
+}
+
+.wallet-toman-withdraw__icons {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+}
+
+.wallet-toman-withdraw__icon-big {
+  display: block;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: var(--surface-elevated, var(--bg));
+}
+
+.wallet-toman-withdraw__icon-small {
+  position: absolute;
+  inset-inline-end: -3px;
+  bottom: -3px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 5px;
+  border: 1.5px solid var(--surface);
+  background: color-mix(in srgb, var(--accent) 14%, var(--surface));
+  color: var(--accent);
+}
+
+.wallet-toman-withdraw__info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.wallet-toman-withdraw__name {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.wallet-toman-withdraw__protocol {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.wallet-toman-withdraw__fee {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
+  text-align: end;
+}
+
+.wallet-toman-withdraw__fee-label {
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.wallet-toman-withdraw__fee-amount {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.wallet-toman-withdraw__arrow {
+  display: inline-flex;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.wallet-toman-withdraw__min {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px 10px;
+  border-top: 1px solid var(--border-subtle);
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-muted);
+}

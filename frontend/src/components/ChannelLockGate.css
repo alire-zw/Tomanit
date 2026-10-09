@@ -1,0 +1,61 @@
+/* Channel lock — FlatSelectModal / bank-card modal structure (MerchantPay) */
+
+.channel-lock-fsm__lead {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.55;
+  color: var(--text-muted);
+  text-align: start;
+}
+
+.channel-lock-fsm__item {
+  align-items: center;
+  border-bottom: none;
+}
+
+.channel-lock-fsm__item:disabled {
+  cursor: default;
+  opacity: 1;
+}
+
+.channel-lock-fsm__item.is-checking .fsm-modal__icon {
+  background: color-mix(in srgb, var(--accent) 18%, var(--surface));
+}
+
+.channel-lock-fsm__copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  align-items: flex-start;
+}
+
+.channel-lock-fsm__copy .fsm-modal__label {
+  width: 100%;
+}
+
+.channel-lock-fsm__blurb {
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.35;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.channel-lock-fsm__blurb.is-status {
+  font-weight: 500;
+  color: var(--accent);
+}
+
+.channel-lock-fsm__blurb.is-ok {
+  color: #16a34a;
+}
+
+.channel-lock-fsm .fsm-modal__item--selected .fsm-modal__icon {
+  background: color-mix(in srgb, #16a34a 14%, var(--surface));
+  color: #16a34a;
+}
