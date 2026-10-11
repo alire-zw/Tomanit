@@ -62,6 +62,11 @@ const envSchema = z.object({
   JIBIT_SECRET_KEY: z.string().optional(),
   JIBIT_IDE_BASE_URL: z.string().url().default("https://napi.jibit.ir/ide/v1"),
   /**
+   * Iranian exit proxy for Jibit Identicator (card/national-id matching).
+   * socks5:// or http:// — falls back to GATEWAY_PROXY when unset.
+   */
+  JIBIT_PROXY: z.string().optional(),
+  /**
    * 32-byte hex key for AES-256-GCM wallet private-key encryption.
    * Required in production. In development, derived from TELEGRAM_BOT_TOKEN if unset.
    */
@@ -197,6 +202,7 @@ export const env = {
     /\/+$/,
     "",
   ),
+  JIBIT_PROXY: raw.JIBIT_PROXY?.trim() || "",
   WALLET_MASTER_KEY: raw.WALLET_MASTER_KEY?.trim() || null,
   TRON_NETWORK: raw.TRON_NETWORK,
   ...(() => {

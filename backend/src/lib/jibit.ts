@@ -1,4 +1,5 @@
 import { env } from "../config/env.js";
+import { jibitFetch } from "./jibitProxy.js";
 import { log } from "./log.js";
 
 type TokenBundle = {
@@ -26,7 +27,9 @@ function requireKeys() {
   }
 }
 
-async function readJson(res: Response): Promise<Record<string, unknown>> {
+async function readJson(res: {
+  text(): Promise<string>;
+}): Promise<Record<string, unknown>> {
   const text = await res.text();
   if (!text) return {};
   try {
@@ -38,7 +41,7 @@ async function readJson(res: Response): Promise<Record<string, unknown>> {
 
 async function generateTokens(): Promise<TokenBundle> {
   requireKeys();
-  const res = await fetch(`${env.JIBIT_IDE_BASE_URL}/tokens/generate`, {
+  const res = await jibitFetch(`${env.JIBIT_IDE_BASE_URL}/tokens/generate`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Accept: "application/json" },
     body: JSON.stringify({
@@ -72,7 +75,7 @@ async function getAccessToken(): Promise<string> {
 
 async function jibitGet(pathWithQuery: string): Promise<Record<string, unknown>> {
   const token = await getAccessToken();
-  const res = await fetch(`${env.JIBIT_IDE_BASE_URL}${pathWithQuery}`, {
+  const res = await jibitFetch(`${env.JIBIT_IDE_BASE_URL}${pathWithQuery}`, {
     method: "GET",
     headers: {
       Accept: "application/json",
@@ -85,7 +88,7 @@ async function jibitGet(pathWithQuery: string): Promise<Record<string, unknown>>
   if (res.status === 401 || res.status === 403) {
     cachedTokens = null;
     const retryToken = await getAccessToken();
-    const retry = await fetch(`${env.JIBIT_IDE_BASE_URL}${pathWithQuery}`, {
+    const retry = await jibitFetch(`${env.JIBIT_IDE_BASE_URL}${pathWithQuery}`, {
       method: "GET",
       headers: {
         Accept: "application/json",
