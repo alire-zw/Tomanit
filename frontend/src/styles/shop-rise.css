@@ -1,12 +1,12 @@
 .shop-rise {
-  animation: shop-rise 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
-  animation-delay: calc(min(var(--rise-index, 0), 8) * 18ms);
+  animation: shop-rise 0.52s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(min(var(--rise-index, 0), 8) * 42ms);
 }
 
 @keyframes shop-rise {
   from {
     opacity: 0;
-    transform: translate3d(0, 14px, 0);
+    transform: translate3d(0, 32px, 0);
   }
 
   to {
