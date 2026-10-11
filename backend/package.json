@@ -11,7 +11,8 @@
     "db:sync": "node scripts/sync-db-provider.mjs",
     "db:generate": "npm run db:sync && prisma generate",
     "db:push": "npm run db:sync && prisma db push",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "make-admin": "tsx scripts/make-admin.ts"
   },
   "engines": {
     "node": ">=20"
