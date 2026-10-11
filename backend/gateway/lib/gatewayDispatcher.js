@@ -13,7 +13,9 @@
 
 const http = require("node:http");
 const https = require("node:https");
-const { Agent, ProxyAgent, fetch as undiciFetch } = require("undici");
+const undici = require("undici");
+const { Agent, ProxyAgent } = undici;
+const undiciFetch = undici.fetch;
 const { SocksProxyAgent } = require("socks-proxy-agent");
 const { createLogger } = require("./logger");
 
