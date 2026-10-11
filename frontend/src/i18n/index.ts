@@ -35,6 +35,10 @@ const loadedLocales: Partial<Record<LocaleCode, FaMessages>> = {
 
 const localePromises = new Map<LocaleCode, Promise<FaMessages>>();
 
+export function isLocaleLoaded(code: LocaleCode): boolean {
+  return Boolean(loadedLocales[code]);
+}
+
 export async function ensureLocaleLoaded(code: LocaleCode): Promise<FaMessages> {
   const existing = loadedLocales[code];
   if (existing) return existing;

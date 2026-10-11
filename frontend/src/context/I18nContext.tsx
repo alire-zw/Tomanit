@@ -13,6 +13,7 @@ import {
   ensureLocaleLoaded,
   getLocaleMeta,
   isLocaleCode,
+  isLocaleLoaded,
   isRtlLocale,
   preloadLocale,
   readStoredLocale,
@@ -48,28 +49,43 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     if (typeof window === "undefined") return "fa";
     return bootstrapI18n();
   });
+  /** Bumps when a locale catalog finishes loading so `t` re-binds even if code stayed the same. */
+  const [catalogEpoch, setCatalogEpoch] = useState(0);
 
-  const setLocale = useCallback((code: LocaleCode, options?: { persist?: boolean }) => {
-    writeStoredLocale(code);
+  const applyLocale = useCallback((code: LocaleCode) => {
     setActiveLocale(code);
-    // Prefer already-loaded dict; otherwise warm it then re-render.
-    void ensureLocaleLoaded(code).then(() => {
-      setActiveLocale(code);
-      setLocaleState(code);
-    });
     setLocaleState(code);
-    if (options?.persist === false) return;
-    void apiFetch("/me", {
-      method: "PATCH",
-      body: { languageCode: code },
-    }).catch(() => {
-      // Offline / unauthenticated — local preference still applies.
-    });
+    setCatalogEpoch((n) => n + 1);
   }, []);
+
+  const setLocale = useCallback(
+    (code: LocaleCode, options?: { persist?: boolean }) => {
+      writeStoredLocale(code);
+      // Flip document dir/lang immediately; strings wait for the catalog.
+      setActiveLocale(code);
+
+      if (isLocaleLoaded(code)) {
+        applyLocale(code);
+      } else {
+        void ensureLocaleLoaded(code).then(() => {
+          applyLocale(code);
+        });
+      }
+
+      if (options?.persist === false) return;
+      void apiFetch("/me", {
+        method: "PATCH",
+        body: { languageCode: code },
+      }).catch(() => {
+        // Offline / unauthenticated — local preference still applies.
+      });
+    },
+    [applyLocale],
+  );
 
   const t = useCallback(
     (key: string, params?: TranslateParams) => translate(locale, key, params),
-    [locale],
+    [locale, catalogEpoch],
   );
 
   useEffect(() => {
@@ -81,11 +97,10 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     setActiveLocale(preferred);
     if (preferred !== "fa") {
       void ensureLocaleLoaded(preferred).then(() => {
-        setActiveLocale(preferred);
-        setLocaleState(preferred);
+        applyLocale(preferred);
       });
     }
-  }, []);
+  }, [applyLocale]);
 
   useEffect(() => {
     const onServerLocale = (event: Event) => {
@@ -107,7 +122,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
       setLocale: (code) => setLocale(code),
       t,
     };
-  }, [locale, setLocale, t]);
+  }, [locale, setLocale, t, catalogEpoch]);
 
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
 }
