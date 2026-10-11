@@ -11,6 +11,7 @@ import Quiz05Icon from "../components/icons/hugeicons/Quiz05Icon";
 import Robot01Icon from "../components/icons/hugeicons/Robot01Icon";
 import Settings01Icon from "../components/icons/hugeicons/Settings01Icon";
 import TransactionHistoryIcon from "../components/icons/hugeicons/TransactionHistoryIcon";
+import type { HugeIconProps } from "../components/icons/hugeicons/constants";
 import { useI18n } from "../context/I18nContext";
 import { useAuth } from "../hooks/useAuth";
 import { useTelegram } from "../hooks/useTelegram";
@@ -32,7 +33,7 @@ type Tile = {
   labelKey: string;
   hintKey?: string;
   path: string;
-  Icon: ComponentType<{ width?: number; height?: number; size?: number; variant?: string }>;
+  Icon: ComponentType<HugeIconProps>;
 };
 
 /** Rows: 2 · 1 · 2 · 1 · 2 — manual invoice alone on row 2; report bot above API/settings */

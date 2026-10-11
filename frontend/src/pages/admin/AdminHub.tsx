@@ -14,6 +14,7 @@ import RefreshIcon from "../../components/icons/hugeicons/RefreshIcon";
 import TeamWorkIcon from "../../components/icons/hugeicons/TeamWorkIcon";
 import User02Icon from "../../components/icons/hugeicons/User02Icon";
 import WalletCardsIcon from "../../components/icons/hugeicons/WalletCardsIcon";
+import type { HugeIconProps } from "../../components/icons/hugeicons/constants";
 import { useI18n } from "../../context/I18nContext";
 import { useAuth } from "../../hooks/useAuth";
 import { apiFetch } from "../../lib/api";
@@ -21,14 +22,7 @@ import { formatFaNumber } from "../../lib/format";
 import "../../styles/shop-rise.css";
 import "./Admin.css";
 
-type HugeIcon = ComponentType<{
-  width?: number | string;
-  height?: number | string;
-  size?: number;
-  color?: string;
-  variant?: string;
-  className?: string;
-}>;
+type HugeIcon = ComponentType<HugeIconProps>;
 
 type HubTile = {
   id: string;

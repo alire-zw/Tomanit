@@ -17,6 +17,7 @@ import Sun02Icon from "../../components/icons/hugeicons/Sun02Icon";
 import WavingHand01Icon from "../../components/icons/hugeicons/WavingHand01Icon";
 import WebDesign01Icon from "../../components/icons/hugeicons/WebDesign01Icon";
 import AiAutoRotateIcon from "../../components/icons/hugeicons/AiAutoRotateIcon";
+import type { HugeIconProps } from "../../components/icons/hugeicons/constants";
 import { useI18n } from "../../context/I18nContext";
 import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../hooks/useAuth";
@@ -92,11 +93,7 @@ type PublicLink = MerchantPaymentLink & {
   chargeCode?: string | null;
 };
 
-type ChannelIcon = ComponentType<{
-  size?: number;
-  color?: string;
-  variant?: string;
-}>;
+type ChannelIcon = ComponentType<HugeIconProps>;
 
 function channelMeta(
   channel: PublicLink["shopChannel"],

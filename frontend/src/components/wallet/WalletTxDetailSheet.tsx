@@ -5,17 +5,14 @@ import { useNotification } from "../Notification";
 import HoldPhoneIcon from "../icons/hugeicons/HoldPhoneIcon";
 import RoboticIcon from "../icons/hugeicons/RoboticIcon";
 import WebDesign01Icon from "../icons/hugeicons/WebDesign01Icon";
+import type { HugeIconProps } from "../icons/hugeicons/constants";
 import { useI18n } from "../../context/I18nContext";
 import { useTelegram } from "../../hooks/useTelegram";
 import type { WalletTransaction } from "../../lib/api";
 import { formatFaDate, formatFaCryptoQty, formatFaNumber } from "../../lib/format";
 import "./WalletTxDetailSheet.css";
 
-type ChannelIcon = ComponentType<{
-  size?: number;
-  color?: string;
-  variant?: string;
-}>;
+type ChannelIcon = ComponentType<HugeIconProps>;
 
 function shopChannelMeta(
   channel: string | null | undefined,

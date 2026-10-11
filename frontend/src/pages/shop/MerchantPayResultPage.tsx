@@ -12,6 +12,7 @@ import ArrowUpRight01Icon from "../../components/icons/hugeicons/ArrowUpRight01I
 import HoldPhoneIcon from "../../components/icons/hugeicons/HoldPhoneIcon";
 import RoboticIcon from "../../components/icons/hugeicons/RoboticIcon";
 import WebDesign01Icon from "../../components/icons/hugeicons/WebDesign01Icon";
+import type { HugeIconProps } from "../../components/icons/hugeicons/constants";
 import { useI18n } from "../../context/I18nContext";
 import { useTheme } from "../../context/ThemeContext";
 import { useTelegram } from "../../hooks/useTelegram";
@@ -39,11 +40,7 @@ import "./MerchantPayResult.css";
 
 const AMOUNT_COLOR = "#fbbf24";
 
-type ChannelIcon = ComponentType<{
-  size?: number;
-  color?: string;
-  variant?: string;
-}>;
+type ChannelIcon = ComponentType<HugeIconProps>;
 
 function channelMeta(
   channel: NonNullable<MerchantPayCharge["shopChannel"]>,
