@@ -1,4 +1,13 @@
-import { useCallback, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { useNotification } from "../../components/Notification";
 import { PageHeader } from "../../components/PageHeader";
@@ -29,14 +38,17 @@ import {
   writeCachedWalletRates,
 } from "../../lib/walletRatesCache";
 import { getWalletAssetBalance } from "../../lib/walletUi";
-import {
-  CoinPriceChart,
-  type ChartCandlePoint,
-  type ChartLinePoint,
-  type ChartScrubPoint,
+import type {
+  ChartCandlePoint,
+  ChartLinePoint,
+  ChartScrubPoint,
 } from "./CoinPriceChart";
 import "../../styles/shop-rise.css";
 import "./WalletAsset.css";
+
+const CoinPriceChart = lazy(() =>
+  import("./CoinPriceChart").then((m) => ({ default: m.CoinPriceChart })),
+);
 
 type CoinActionId = "deposit" | "withdraw" | "buy" | "convert";
 type RatesMap = Partial<Record<WalletAssetId, number>>;
@@ -669,12 +681,14 @@ export function WalletAssetPage() {
                   </span>
                 </span>
               ) : null}
-              <CoinPriceChart
-                style={chartStyle}
-                points={chartPoints}
-                tone={periodTone}
-                onScrub={setScrub}
-              />
+              <Suspense fallback={<div className="coin-page__chart-empty" aria-hidden />}>
+                <CoinPriceChart
+                  style={chartStyle}
+                  points={chartPoints}
+                  tone={periodTone}
+                  onScrub={setScrub}
+                />
+              </Suspense>
             </div>
           ) : (
             <div className="coin-page__chart-empty" aria-hidden />

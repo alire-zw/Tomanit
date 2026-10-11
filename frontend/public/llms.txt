@@ -4,12 +4,12 @@
 
 ## Primary OpenAPI (JSON)
 
-- Live (recommended): https://vtb.mirall.ir/merchant/v1/openapi.json
+- Live (recommended): https://api.tunne.lol/merchant/v1/openapi.json
 - Static mirror: /openapi/merchant-api.json
 
 ## Human docs
 
-- https://vt.mirall.ir/docs/merchant-api
+- https://tomanit.tunne.lol/docs/merchant-api
 
 ## Auth
 

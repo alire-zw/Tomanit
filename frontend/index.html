@@ -6,9 +6,220 @@
     <meta name="theme-color" content="#eef6f5" />
     <meta name="color-scheme" content="light" />
     <title>تومانیت | Tomanit</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <meta
+      name="description"
+      content="تومانیت — کیف پول و پرداخت امن در تلگرام"
+    />
+    <link rel="preconnect" href="https://telegram.org" crossorigin />
+    <link rel="dns-prefetch" href="https://telegram.org" />
+    <link
+      rel="preload"
+      href="/fonts/IRANYekanX-Regular.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="/fonts/IRANYekanX-Medium.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <script>
+      (function () {
+        var APP_HEADER = { light: "#eef6f5", dark: "#0c0e0e" };
+        var APP_BOTTOM = { light: "#f7fbfb", dark: "#000000" };
+
+        function schemeOf() {
+          try {
+            var mode = localStorage.getItem("tomanit.themeMode") || "auto";
+            if (mode === "dark") return "dark";
+            if (mode === "light") return "light";
+          } catch (e) {}
+          try {
+            if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+              return "dark";
+            }
+          } catch (e2) {}
+          return "light";
+        }
+
+        function readChromeCache() {
+          try {
+            return JSON.parse(localStorage.getItem("tomanit:tgChrome") || "null");
+          } catch (e) {
+            return null;
+          }
+        }
+
+        function startParamToken() {
+          try {
+            var q = new URLSearchParams(window.location.search).get("tgWebAppStartParam");
+            if (!q) return null;
+            var m = /^inv_(\d{6,24})$/i.exec(q) || /^(\d{6,24})$/.exec(q);
+            return m ? m[1] : null;
+          } catch (e) {
+            return null;
+          }
+        }
+
+        function resolveHeader(scheme) {
+          var path = (location.pathname || "/").replace(/\/+$/, "") || "/";
+          var pay =
+            path === "/p" ||
+            path.indexOf("/p/") === 0 ||
+            path === "/pay" ||
+            path.indexOf("/pay/") === 0 ||
+            !!startParamToken();
+          var cache = readChromeCache();
+          // Always plain light/dark on boot (even for invoices).
+          if (!pay && cache && cache.scheme === scheme && cache.appHeader) {
+            return {
+              header: cache.appHeader,
+              bottom: cache.appBottom || APP_BOTTOM[scheme],
+            };
+          }
+          return {
+            header: APP_HEADER[scheme],
+            bottom: APP_BOTTOM[scheme],
+          };
+        }
+
+        function paint(header, bottom, scheme) {
+          // Once React theme owns the document, stop fighting it.
+          if (window.__tomanitThemeReady) return true;
+          document.documentElement.setAttribute("data-theme", scheme);
+          document.documentElement.style.colorScheme = scheme;
+          // Never set inline background — it pins light/dark after theme changes.
+          var metaTheme = document.querySelector('meta[name="theme-color"]');
+          var metaScheme = document.querySelector('meta[name="color-scheme"]');
+          if (metaTheme) metaTheme.setAttribute("content", header);
+          if (metaScheme) metaScheme.setAttribute("content", scheme);
+          var splash = document.getElementById("boot-splash");
+          if (splash) splash.style.backgroundColor = header;
+          try {
+            var tg = window.Telegram && window.Telegram.WebApp;
+            if (!tg) return false;
+            if (tg.setHeaderColor) tg.setHeaderColor(header);
+            if (tg.setBackgroundColor) tg.setBackgroundColor(header);
+            if (tg.setBottomBarColor) tg.setBottomBarColor(bottom);
+            return true;
+          } catch (e5) {
+            return false;
+          }
+        }
+
+        var scheme = schemeOf();
+        var colors = resolveHeader(scheme);
+        paint(colors.header, colors.bottom, scheme);
+        window.__tomanitBootChrome = function () {
+          if (window.__tomanitThemeReady) return true;
+          var s = schemeOf();
+          var c = resolveHeader(s);
+          return paint(c.header, c.bottom, s);
+        };
+
+        var tries = 0;
+        var timer = setInterval(function () {
+          tries += 1;
+          if (window.__tomanitThemeReady) {
+            clearInterval(timer);
+            return;
+          }
+          var ok = window.__tomanitBootChrome && window.__tomanitBootChrome();
+          if (ok || tries >= 60) clearInterval(timer);
+        }, 40);
+      })();
+    </script>
+    <style>
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+        background: #eef6f5;
+      }
+      html[data-theme="dark"],
+      html[data-theme="dark"] body {
+        background: #0c0e0e;
+      }
+      .app-splash {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-sizing: border-box;
+        background: inherit;
+        background-color: #eef6f5;
+        opacity: 1;
+        visibility: visible;
+        transition:
+          opacity 0.85s cubic-bezier(0.22, 1, 0.36, 1),
+          visibility 0.85s linear;
+      }
+      html[data-theme="dark"] .app-splash {
+        background-color: #0c0e0e;
+      }
+      .app-splash--hide {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+      }
+      .app-splash__logo {
+        display: block;
+        width: 59px;
+        height: 59px;
+        object-fit: contain;
+        border: 0;
+        border-radius: 14px;
+        overflow: hidden;
+        animation: app-splash-pulse 1.6s ease-in-out infinite;
+        transition:
+          opacity 0.75s cubic-bezier(0.22, 1, 0.36, 1),
+          transform 0.85s cubic-bezier(0.22, 1, 0.36, 1);
+      }
+      .app-splash--hide .app-splash__logo {
+        opacity: 0;
+        transform: scale(0.96);
+        animation: none;
+      }
+      @keyframes app-splash-pulse {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.045);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .app-splash__logo {
+          animation: none;
+        }
+      }
+    </style>
+    <!-- defer: doesn't block the splash paint, but must stay before the module entry so ready()/header colors apply on first effect. -->
+    <script
+      src="https://telegram.org/js/telegram-web-app.js"
+      defer
+      onload="try{window.__tomanitBootChrome&&window.__tomanitBootChrome()}catch(e){}"
+    ></script>
   </head>
   <body>
+    <!-- Outside #root so React mount doesn't kill it — fades out when app is ready -->
+    <div class="app-splash" id="boot-splash" aria-busy="true">
+      <img
+        class="app-splash__logo"
+        src="/Tomanit.webp"
+        alt="Tomanit"
+        width="59"
+        height="59"
+        decoding="async"
+        fetchpriority="high"
+      />
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

@@ -4,7 +4,6 @@ import { fileURLToPath } from "node:url";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import fastifyStatic from "@fastify/static";
 import formbody from "@fastify/formbody";
-import { Agent, fetch as undiciFetch } from "undici";
 import { prisma } from "../db/prisma.js";
 import { log } from "../lib/log.js";
 import { payProxyLimiter } from "../lib/rateLimit.js";
@@ -14,12 +13,9 @@ const require = createRequire(import.meta.url);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const GATEWAY_ROOT = path.resolve(__dirname, "../../gateway");
 
-const sepAgent = new Agent({
-  keepAliveTimeout: 30_000,
-  keepAliveMaxTimeout: 60_000,
-  connections: 16,
-  pipelining: 1,
-});
+const { gatewayFetch } = require(path.join(GATEWAY_ROOT, "lib/gatewayDispatcher.js")) as {
+  gatewayFetch: (url: string, options?: Record<string, unknown>) => Promise<Response>;
+};
 
 const {
   loadGatewaySession,
@@ -150,7 +146,13 @@ export async function payShellRoutes(app: FastifyInstance) {
       return htmlReply(reply, 200, renderGatewayPage(payment, trackId));
     } catch (err) {
       const message = err instanceof Error ? err.message : "Internal error";
-      log.error("pay-start", err);
+      const cause =
+        err instanceof Error && err.cause instanceof Error
+          ? err.cause.message
+          : err instanceof Error && err.cause && typeof err.cause === "object"
+            ? String((err.cause as { code?: string }).code || err.cause)
+            : null;
+      log.error("pay-start", cause ? `${message} · ${cause}` : err);
       return htmlReply(reply, 500, renderErrorPage(message, trackId));
     }
   });
@@ -287,9 +289,8 @@ async function proxySep(request: FastifyRequest, reply: FastifyReply) {
       : "";
 
   try {
-    const upstream = await undiciFetch(sepUrl, {
+    const upstream = await gatewayFetch(sepUrl, {
       method,
-      dispatcher: sepAgent,
       headers: {
         "User-Agent":
           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124.0 Safari/537.36",

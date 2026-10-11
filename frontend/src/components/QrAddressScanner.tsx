@@ -1,6 +1,5 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Html5Qrcode, Html5QrcodeSupportedFormats } from "html5-qrcode";
 import { useI18n } from "../context/I18nContext";
 import { useTelegram } from "../hooks/useTelegram";
 import { useRelockScrollWhileOpen } from "../hooks/useRelockScrollWhileOpen";
@@ -8,13 +7,17 @@ import { parseWalletQrPayload } from "../lib/parseWalletQr";
 import { lockAppScroll, unlockAppScroll } from "../lib/scrollLock";
 import "./QrAddressScanner.css";
 
+type Html5QrcodeInstance = InstanceType<
+  typeof import("html5-qrcode").Html5Qrcode
+>;
+
 type Props = {
   open: boolean;
   onClose: () => void;
   onScan: (address: string) => void;
 };
 
-async function safeStop(scanner: Html5Qrcode | null): Promise<void> {
+async function safeStop(scanner: Html5QrcodeInstance | null): Promise<void> {
   if (!scanner) return;
   try {
     const state = scanner.getState?.();
@@ -32,7 +35,7 @@ export function QrAddressScanner({ open, onClose, onScan }: Props) {
   const { haptic } = useTelegram();
   const reactId = useId().replace(/:/g, "");
   const regionId = `qr-scan-${reactId}`;
-  const scannerRef = useRef<Html5Qrcode | null>(null);
+  const scannerRef = useRef<Html5QrcodeInstance | null>(null);
   const handledRef = useRef(false);
   const onCloseRef = useRef(onClose);
   const onScanRef = useRef(onScan);
@@ -89,7 +92,7 @@ export function QrAddressScanner({ open, onClose, onScan }: Props) {
     };
   }, [open]);
 
-  // Start scanner only while visible+open.
+  // Start scanner only while visible+open. html5-qrcode is loaded on demand.
   useEffect(() => {
     if (!open || !visible) return;
 
@@ -109,10 +112,24 @@ export function QrAddressScanner({ open, onClose, onScan }: Props) {
       // Ensure empty host — never call clear() while React owns the node.
       host.innerHTML = "";
 
-      const scanner = new Html5Qrcode(regionId, {
-        formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
-        verbose: false,
-      });
+      let scanner: Html5QrcodeInstance;
+      try {
+        const { Html5Qrcode, Html5QrcodeSupportedFormats } = await import(
+          "html5-qrcode"
+        );
+        if (cancelled || handledRef.current) return;
+        scanner = new Html5Qrcode(regionId, {
+          formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
+          verbose: false,
+        });
+      } catch {
+        if (!cancelled) {
+          setStarting(false);
+          setError(t("wallet.withdrawScanError"));
+        }
+        return;
+      }
+      if (cancelled || handledRef.current) return;
       scannerRef.current = scanner;
 
       try {

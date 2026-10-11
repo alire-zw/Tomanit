@@ -244,14 +244,47 @@
 }
 
 .wallet__segment {
+  position: relative;
   display: grid;
   grid-template-columns: 1fr 1fr;
   margin: 8px var(--page-padding-x) 14px;
   border-bottom: 1px solid var(--border-subtle);
 }
 
+.wallet__segment-indicator {
+  position: absolute;
+  bottom: -1px;
+  inset-inline-start: 0;
+  width: 50%;
+  height: 2px;
+  pointer-events: none;
+  z-index: 1;
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+.wallet__segment-indicator::after {
+  content: "";
+  display: block;
+  width: 64%;
+  height: 100%;
+  margin-inline: auto;
+  border-radius: 2px 2px 0 0;
+  background: var(--accent);
+}
+
+/* Slide by one full column */
+.wallet__segment--history .wallet__segment-indicator {
+  transform: translateX(100%);
+}
+
+html[dir="rtl"] .wallet__segment--history .wallet__segment-indicator {
+  transform: translateX(-100%);
+}
+
 .wallet__segment-btn {
   position: relative;
+  z-index: 2;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -265,7 +298,7 @@
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition: color 0.15s ease;
+  transition: color 0.2s ease;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -274,22 +307,35 @@
   font-weight: 600;
 }
 
-.wallet__segment-btn.is-active::after {
-  content: "";
-  position: absolute;
-  inset-inline: 18%;
-  bottom: -1px;
-  height: 2px;
-  border-radius: 2px 2px 0 0;
-  background: var(--accent);
-}
-
 .wallet__segment-btn:active {
   opacity: 0.72;
 }
 
 .wallet__tab-panel {
   margin-bottom: 4px;
+}
+
+/* Staggered item fade-in on tab switch — no pane slide / no vertical jump. */
+.wallet__tab-item {
+  animation: wallet-tab-item-in 0.32s ease-out both;
+  animation-delay: calc(min(var(--wallet-item-index, 0), 10) * 34ms);
+}
+
+@keyframes wallet-tab-item-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wallet__segment-indicator,
+  .wallet__tab-item {
+    transition: none !important;
+    animation: none !important;
+  }
 }
 
 .wallet__assets {
@@ -540,6 +586,23 @@
   border-radius: 8px;
   object-fit: cover;
   background: var(--surface-elevated);
+}
+
+.wallet__transaction-logo--shop {
+  border-radius: 10px;
+}
+
+.wallet__transaction-shop-fallback {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--accent) 18%, var(--surface-elevated));
+  color: var(--accent);
+  font-size: 0.85rem;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .wallet__transaction-badge {

@@ -12,6 +12,7 @@ import {
   readProfileCreditsShown,
   writeProfileCreditsShown,
 } from "../lib/profileCredits";
+import { prefetchRoute } from "../lib/routePrefetch";
 import { adminNavItem, iconSize, navItems } from "./navItems";
 import "./BottomNav.css";
 
@@ -109,6 +110,9 @@ export function BottomNav() {
               className={({ isActive }) =>
                 `bottom-nav__item${isActive ? " bottom-nav__item--active" : ""}`
               }
+              onPointerEnter={() => prefetchRoute(item.path)}
+              onPointerDown={() => prefetchRoute(item.path)}
+              onTouchStart={() => prefetchRoute(item.path)}
               onClick={isProfile ? handleProfileTap : () => haptic("light")}
             >
               {({ isActive }) => (

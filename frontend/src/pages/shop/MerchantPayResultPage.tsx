@@ -27,9 +27,13 @@ import {
 } from "../../lib/invoiceThemes";
 import {
   fetchMerchantPayCharge,
+  notifyMerchantPayOpened,
   type MerchantPayCharge,
 } from "../../lib/shop";
-import { applyMerchantPayTelegramChrome } from "../../lib/telegramTheme";
+import {
+  applyMerchantPayTelegramChrome,
+  releaseInvoiceTelegramChrome,
+} from "../../lib/telegramTheme";
 import "./MerchantPay.css";
 import "./MerchantPayResult.css";
 
@@ -133,13 +137,13 @@ export function MerchantPayResultPage() {
     locale === "fa" || locale === "ar" ? ArrowUpLeft01Icon : ArrowUpRight01Icon;
 
   useLayoutEffect(() => {
-    const cached = readCachedInvoiceTheme(code);
-    if (cached) {
-      setInvoiceTheme(cached);
-      applyInvoiceTheme(cached);
-    }
+    // Neutral light/dark until charge loads — then seller accent.
+    clearInvoiceTheme();
+    releaseInvoiceTelegramChrome();
+    setInvoiceTheme(readCachedInvoiceTheme(code) ?? "teal");
     return () => {
       clearInvoiceTheme();
+      releaseInvoiceTelegramChrome();
     };
   }, [code]);
 
@@ -179,6 +183,11 @@ export function MerchantPayResultPage() {
   }, [load]);
 
   useEffect(() => {
+    // Paid / result deep-links skip the invoice intro — still send /start.
+    void notifyMerchantPayOpened().catch(() => {});
+  }, []);
+
+  useEffect(() => {
     if (!code || !charge) return;
     if (charge.status === "completed" || charge.status === "failed") return;
     const id = window.setInterval(() => {
@@ -194,8 +203,18 @@ export function MerchantPayResultPage() {
   const tone = isFailed ? "fail" : isCompleted ? "ok" : "pending";
 
   useEffect(() => {
-    applyMerchantPayTelegramChrome(isFailed ? "danger" : "accent");
-  }, [colorScheme, isFailed, invoiceTheme]);
+    if (!charge && loading) return;
+    if (!charge && error) {
+      applyMerchantPayTelegramChrome("danger");
+      return;
+    }
+    if (!charge) return;
+    applyInvoiceTheme(invoiceTheme);
+    // Success/fail chrome stay fixed green/red — not the seller invoice accent.
+    applyMerchantPayTelegramChrome(
+      isFailed ? "danger" : isCompleted ? "success" : "accent",
+    );
+  }, [colorScheme, isFailed, isCompleted, invoiceTheme, charge, loading, error]);
 
   const title =
     !charge && error

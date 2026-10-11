@@ -1,9 +1,9 @@
 "use strict";
 
-const { Agent, fetch: undiciFetch } = require("undici");
 const cheerio = require("cheerio");
 const { CookieJar } = require("./cookieJar");
 const { createLogger } = require("./logger");
+const { gatewayFetch, getGatewayProxyLabel } = require("./gatewayDispatcher");
 
 const log = createLogger("gatewayService");
 
@@ -18,18 +18,11 @@ const DEFAULT_HEADERS = {
   "Accept-Language": "fa-IR,fa;q=0.9,en-US;q=0.8,en;q=0.7",
 };
 
-/** Keep-alive pool — avoids TLS handshake on every Zibal/SEP hop. */
-const httpAgent = new Agent({
-  keepAliveTimeout: 30_000,
-  keepAliveMaxTimeout: 60_000,
-  connections: 16,
-  pipelining: 1,
-});
-
 /** @type {Map<string, { jar: CookieJar, zibalId: string, createdAt: number }>} */
 const sessionStore = new Map();
 
 const SESSION_TTL_MS = 20 * 60 * 1000;
+const FETCH_RETRIES = 2;
 
 function pruneSessions() {
   const now = Date.now();
@@ -38,30 +31,82 @@ function pruneSessions() {
   }
 }
 
+function networkCause(err) {
+  const cause = err && typeof err === "object" ? err.cause : null;
+  if (!cause) return err instanceof Error ? err.message : String(err);
+  return cause.code || cause.message || String(cause);
+}
+
+function isRetryableNetworkError(err) {
+  const code = String(networkCause(err) || "");
+  return /CONNECT_TIMEOUT|ECONNRESET|ECONNREFUSED|ETIMEDOUT|UND_ERR_SOCKET|EAI_AGAIN|ENOTFOUND|fetch failed/i.test(
+    code,
+  );
+}
+
+function friendlyNetworkError(err, hostLabel) {
+  const code = String(networkCause(err) || "");
+  if (/CONNECT_TIMEOUT|ETIMEDOUT/i.test(code)) {
+    return `اتصال به ${hostLabel} برقرار نشد (تایم‌اوت). اگر VPN روشن است، دامنه شاپرک را Direct کنید و دوباره تلاش کنید.`;
+  }
+  if (/ECONNRESET|UND_ERR_SOCKET/i.test(code)) {
+    return `ارتباط با ${hostLabel} قطع شد. لطفاً چند لحظه بعد دوباره تلاش کنید.`;
+  }
+  return `خطا در ارتباط با ${hostLabel}: ${code}`;
+}
+
 async function fetchText(url, options = {}) {
-  const started = Date.now();
-  log.debug("HTTP request started", { method: options.method || "GET", url });
+  const method = options.method || "GET";
+  let lastErr;
 
-  const response = await undiciFetch(url, {
-    ...options,
-    dispatcher: httpAgent,
-    headers: {
-      ...DEFAULT_HEADERS,
-      ...(options.headers || {}),
-    },
-    redirect: "follow",
-  });
+  for (let attempt = 1; attempt <= FETCH_RETRIES; attempt += 1) {
+    const started = Date.now();
+    log.debug("HTTP request started", { method, url, attempt });
+    try {
+      const response = await gatewayFetch(url, {
+        ...options,
+        headers: {
+          ...DEFAULT_HEADERS,
+          ...(options.headers || {}),
+        },
+        redirect: "follow",
+      });
 
-  const body = await response.text();
-  log.debug("HTTP request completed", {
-    method: options.method || "GET",
-    url,
-    status: response.status,
-    durationMs: Date.now() - started,
-    bodyLength: body.length,
-  });
+      const body = await response.text();
+      log.debug("HTTP request completed", {
+        method,
+        url,
+        status: response.status,
+        durationMs: Date.now() - started,
+        bodyLength: body.length,
+        attempt,
+      });
 
-  return { response, body };
+      return { response, body };
+    } catch (err) {
+      lastErr = err;
+      const cause = networkCause(err);
+      log.warn("HTTP request failed", {
+        method,
+        url,
+        attempt,
+        durationMs: Date.now() - started,
+        cause,
+      });
+      if (attempt < FETCH_RETRIES && isRetryableNetworkError(err)) {
+        await new Promise((r) => setTimeout(r, 400 * attempt));
+        continue;
+      }
+      break;
+    }
+  }
+
+  const hostLabel = /shaparak\.ir/i.test(url)
+    ? "درگاه شاپرک"
+    : /zibal\.ir/i.test(url)
+      ? "زیبال"
+      : "درگاه پرداخت";
+  throw new Error(friendlyNetworkError(lastErr, hostLabel));
 }
 
 async function fetchZibalToken(zibalId) {
@@ -197,6 +242,11 @@ async function fetchSepCaptcha(sessionKey, jar) {
 async function loadGatewaySession(zibalId) {
   const started = Date.now();
   pruneSessions();
+
+  const proxyLabel = getGatewayProxyLabel();
+  if (proxyLabel) {
+    log.debug("Loading gateway session via proxy", { proxy: proxyLabel, zibalId });
+  }
 
   const jar = new CookieJar();
   const token = await fetchZibalToken(zibalId);

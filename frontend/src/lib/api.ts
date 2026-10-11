@@ -375,6 +375,12 @@ export interface WalletTransaction {
   relatedTxId?: string | null;
   balanceAfter?: number | null;
   metadata?: unknown;
+  /** Merchant invoice — shop snapshot for history UI */
+  shopName?: string | null;
+  shopLogoDataUrl?: string | null;
+  shopChannel?: "website" | "bot" | "manual" | string | null;
+  shopSiteUrl?: string | null;
+  shopBotUrl?: string | null;
   createdAt: string;
   updatedAt?: string;
   completedAt?: string | null;

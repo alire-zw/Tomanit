@@ -146,8 +146,10 @@ export function WalletGatewayResultPage() {
   const isPending = Boolean(charge && !isFailed && !isCompleted);
 
   useEffect(() => {
-    applyMerchantPayTelegramChrome(isFailed ? "danger" : "accent");
-  }, [colorScheme, isFailed]);
+    applyMerchantPayTelegramChrome(
+      isFailed ? "danger" : isCompleted ? "success" : "accent",
+    );
+  }, [colorScheme, isFailed, isCompleted]);
 
   const bannerTitle = !charge
     ? t("wallet.gatewayResultTitle")

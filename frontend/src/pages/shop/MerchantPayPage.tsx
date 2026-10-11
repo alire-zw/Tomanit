@@ -42,10 +42,14 @@ import {
 import {
   createMerchantPayCharge,
   fetchPublicMerchantPay,
+  notifyMerchantPayOpened,
   type MerchantPaymentLink,
 } from "../../lib/shop";
 import type { ThemeMode } from "../../lib/theme";
-import { applyMerchantPayTelegramChrome } from "../../lib/telegramTheme";
+import {
+  applyMerchantPayTelegramChrome,
+  releaseInvoiceTelegramChrome,
+} from "../../lib/telegramTheme";
 import "./MerchantPay.css";
 import "./MerchantPayResult.css";
 
@@ -144,30 +148,21 @@ export function MerchantPayPage() {
   const [cardRequired, setCardRequired] = useState(false);
   const [cardErrorPulse, setCardErrorPulse] = useState(0);
   const [submitting, setSubmitting] = useState(false);
-  const [invoiceTheme, setInvoiceTheme] = useState<InvoiceThemeId>(() =>
-    readCachedInvoiceTheme(code) ?? "teal",
-  );
-  const [themeReady, setThemeReady] = useState(
-    () => readCachedInvoiceTheme(code) != null,
-  );
+  const [invoiceTheme, setInvoiceTheme] = useState<InvoiceThemeId>("teal");
+  /** Seller theme/chrome only after invoice payload is loaded. */
+  const [themeReady, setThemeReady] = useState(false);
   const ArrowIcon =
     locale === "fa" || locale === "ar" ? ArrowUpLeft01Icon : ArrowUpRight01Icon;
 
-  /** Apply cached shop theme before paint — avoids teal flash. */
+  /** Keep boot/splash on plain light/dark — no seller tint until data arrives. */
   useLayoutEffect(() => {
-    const cached = readCachedInvoiceTheme(code);
-    if (cached) {
-      setInvoiceTheme(cached);
-      applyInvoiceTheme(cached);
-      setThemeReady(true);
-      return () => {
-        clearInvoiceTheme();
-      };
-    }
-    setThemeReady(false);
     clearInvoiceTheme();
+    setThemeReady(false);
+    setInvoiceTheme(readCachedInvoiceTheme(code) ?? "teal");
+    releaseInvoiceTelegramChrome();
     return () => {
       clearInvoiceTheme();
+      releaseInvoiceTelegramChrome();
     };
   }, [code]);
 
@@ -176,11 +171,12 @@ export function MerchantPayPage() {
     setLoading(true);
     setLink(null);
     setPhase("intro");
+    setThemeReady(false);
+    clearInvoiceTheme();
     void (async () => {
       if (!code.trim()) {
         if (!cancelled) {
           setLoading(false);
-          setThemeReady(true);
         }
         return;
       }
@@ -205,12 +201,16 @@ export function MerchantPayPage() {
         if (next.payToken) cacheInvoiceTheme(next.payToken, theme);
         setInvoiceTheme(theme);
         applyInvoiceTheme(theme);
-        setThemeReady(true);
         setLink(next);
+        setThemeReady(true);
+        // Open invoice → main bot /start (welcome / language). Paid path uses result page.
+        void refresh({ force: true, silent: true })
+          .then(() => notifyMerchantPayOpened())
+          .catch(() => {});
       } catch {
         if (!cancelled) {
           setLink(null);
-          setThemeReady(true);
+          setThemeReady(false);
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -219,19 +219,19 @@ export function MerchantPayPage() {
     return () => {
       cancelled = true;
     };
-  }, [code, navigate]);
+  }, [code, navigate, refresh]);
 
   const invoiceExpired = Boolean(link && isInvoiceExpired(link));
   const feeBearer = parseFeeBearer(link?.feeBearer);
 
   useEffect(() => {
-    if (!themeReady) return;
+    if (!themeReady || !link) return;
     if (invoiceExpired) {
       applyMerchantPayTelegramChrome("expired");
       return;
     }
     applyMerchantPayTelegramChrome(phase === "next" ? "surface" : "accent");
-  }, [phase, colorScheme, invoiceExpired, invoiceTheme, themeReady]);
+  }, [phase, colorScheme, invoiceExpired, invoiceTheme, themeReady, link]);
 
   useEffect(() => {
     let cancelled = false;

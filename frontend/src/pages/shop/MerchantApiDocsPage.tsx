@@ -441,7 +441,7 @@ export function MerchantApiDocsPage() {
           <div className="mapi-docs__brand">
             <img
               className="mapi-docs__logo"
-              src="/Logo.svg"
+              src="/Tomanit.webp"
               alt=""
               width={36}
               height={36}

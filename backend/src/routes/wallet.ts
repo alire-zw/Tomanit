@@ -507,9 +507,17 @@ export async function walletRoutes(app: FastifyInstance): Promise<void> {
 
     const limit = query.data.limit ?? 50;
     const asset = query.data.asset;
+    const userId = request.user!.id;
+
+    // Backfill payer rows for older merchant invoices paid before history existed.
+    const { backfillPayerInvoiceWalletTxs } = await import(
+      "../lib/merchantInvoiceWalletTx.js"
+    );
+    await backfillPayerInvoiceWalletTxs(userId);
+
     const txs = await prisma.walletTransaction.findMany({
       where: {
-        userId: request.user!.id,
+        userId,
         ...(asset
           ? {
               OR: [
@@ -524,7 +532,7 @@ export async function walletRoutes(app: FastifyInstance): Promise<void> {
       take: limit,
     });
     return {
-      transactions: txs.map(serializeTx),
+      transactions: await serializeTxsWithShop(txs),
     };
   });
 
@@ -551,47 +559,58 @@ export async function walletRoutes(app: FastifyInstance): Promise<void> {
   });
 }
 
-function serializeTx(tx: {
-  id: number;
-  code?: string;
-  type: string;
-  asset: string;
-  amount: number;
-  counterAsset?: string | null;
-  counterAmount?: number | null;
-  unitPriceToman?: number | null;
-  counterUnitPriceToman?: number | null;
-  amountToman?: number | null;
-  status: string;
-  note: string | null;
-  failReason?: string | null;
-  network: string | null;
-  toAddress: string | null;
-  fromAddress: string | null;
-  txHash: string | null;
-  confirmations?: number | null;
-  blockNumber?: string | null;
-  fee: number | null;
-  feeAsset?: string | null;
-  feeToman?: number | null;
-  paymentMethod?: string | null;
-  bankCardId?: number | null;
-  cardNumberMasked?: string | null;
-  iban?: string | null;
-  depositNumber?: string | null;
-  bankName?: string | null;
-  gatewayName?: string | null;
-  gatewayTrackId?: string | null;
-  gatewayRefId?: string | null;
-  gatewayAuthority?: string | null;
-  groupId?: string | null;
-  relatedTxId?: number | null;
-  balanceAfter?: number | null;
-  metadata?: unknown;
-  createdAt: Date;
-  updatedAt?: Date;
-  completedAt?: Date | null;
-}) {
+type ShopTxSnap = {
+  name: string;
+  logoData: string | null;
+  channel?: string | null;
+  siteUrl?: string | null;
+  botUrl?: string | null;
+};
+
+function serializeTx(
+  tx: {
+    id: number;
+    code?: string;
+    type: string;
+    asset: string;
+    amount: number;
+    counterAsset?: string | null;
+    counterAmount?: number | null;
+    unitPriceToman?: number | null;
+    counterUnitPriceToman?: number | null;
+    amountToman?: number | null;
+    status: string;
+    note: string | null;
+    failReason?: string | null;
+    network: string | null;
+    toAddress: string | null;
+    fromAddress: string | null;
+    txHash: string | null;
+    confirmations?: number | null;
+    blockNumber?: string | null;
+    fee: number | null;
+    feeAsset?: string | null;
+    feeToman?: number | null;
+    paymentMethod?: string | null;
+    bankCardId?: number | null;
+    cardNumberMasked?: string | null;
+    iban?: string | null;
+    depositNumber?: string | null;
+    bankName?: string | null;
+    gatewayName?: string | null;
+    gatewayTrackId?: string | null;
+    gatewayRefId?: string | null;
+    gatewayAuthority?: string | null;
+    groupId?: string | null;
+    relatedTxId?: number | null;
+    balanceAfter?: number | null;
+    metadata?: unknown;
+    createdAt: Date;
+    updatedAt?: Date;
+    completedAt?: Date | null;
+  },
+  shop?: ShopTxSnap | null,
+) {
   return {
     id: String(tx.id),
     code: tx.code ?? String(tx.id),
@@ -629,8 +648,63 @@ function serializeTx(tx: {
     relatedTxId: tx.relatedTxId != null ? String(tx.relatedTxId) : null,
     balanceAfter: tx.balanceAfter ?? null,
     metadata: tx.metadata ?? null,
+    shopName: shop?.name ?? null,
+    shopLogoDataUrl: shop?.logoData ?? null,
+    shopChannel: shop?.channel ?? null,
+    shopSiteUrl: shop?.siteUrl ?? null,
+    shopBotUrl: shop?.botUrl ?? null,
     createdAt: tx.createdAt.toISOString(),
     updatedAt: tx.updatedAt?.toISOString() ?? tx.createdAt.toISOString(),
     completedAt: tx.completedAt?.toISOString() ?? null,
   };
+}
+
+async function serializeTxsWithShop(
+  txs: Parameters<typeof serializeTx>[0][],
+) {
+  const { parseMerchantInvoiceMeta } = await import(
+    "../lib/merchantInvoiceWalletTx.js"
+  );
+  const shopIds = new Set<number>();
+  for (const tx of txs) {
+    if (tx.type !== "invoice") continue;
+    const meta = parseMerchantInvoiceMeta(tx.metadata);
+    if (meta) shopIds.add(meta.shopId);
+  }
+
+  const shops =
+    shopIds.size > 0
+      ? await prisma.merchantShop.findMany({
+          where: { id: { in: [...shopIds] } },
+          select: {
+            id: true,
+            name: true,
+            logoData: true,
+            channel: true,
+            siteUrl: true,
+            botUrl: true,
+          },
+        })
+      : [];
+  const byId = new Map(shops.map((s) => [s.id, s]));
+
+  return txs.map((tx) => {
+    if (tx.type !== "invoice") return serializeTx(tx);
+    const meta = parseMerchantInvoiceMeta(tx.metadata);
+    const shop = meta ? byId.get(meta.shopId) : null;
+    const snap: ShopTxSnap | null = shop
+      ? {
+          name: shop.name || meta!.shopName,
+          logoData: shop.logoData,
+          channel: shop.channel,
+          siteUrl: shop.siteUrl,
+          botUrl: shop.botUrl,
+        }
+      : meta
+        ? { name: meta.shopName, logoData: null }
+        : tx.note
+          ? { name: tx.note, logoData: null }
+          : null;
+    return serializeTx(tx, snap);
+  });
 }

@@ -14,8 +14,7 @@ export const variants = [
 export type Variant = (typeof variants)[number]
 
 export type HugeIconProps = {
-  /** Accept string so callers/tiles don't need Variant narrowing. */
-  variant?: Variant | string
+  variant?: Variant
   size?: number
   color?: string
   strokeWidth?: number

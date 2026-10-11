@@ -52,5 +52,7 @@ interface TelegramWebApp {
 }
 
 interface Window {
+  __tomanitThemeReady?: boolean;
+  __tomanitBootChrome?: () => boolean;
   Telegram?: { WebApp: TelegramWebApp };
 }

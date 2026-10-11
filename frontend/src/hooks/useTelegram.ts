@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useState } from "react";
 import { onAppResume, startAppLifecycle } from "../lib/appLifecycle";
 import { refreshAutoTheme, resolveColorScheme } from "../lib/theme";
-import { syncTelegramChromeForPath } from "../lib/telegramTheme";
+import { applyEarlyTelegramChrome, syncTelegramChromeForPath } from "../lib/telegramTheme";
 
 type ColorScheme = "light" | "dark";
 
 /** Survives remounts so AppLayout never blanks the UI after first boot. */
 let telegramReadyOnce = false;
+/** Ensures ready()/expand run once even if the SDK arrives after first paint. */
+let telegramSdkInited = false;
 
 export function useTelegram() {
   const [isReady, setIsReady] = useState(() => telegramReadyOnce);
@@ -14,9 +16,12 @@ export function useTelegram() {
 
   useEffect(() => {
     const stopLifecycle = startAppLifecycle();
-    const tg = window.Telegram?.WebApp;
+    let disposed = false;
+    let pollTimer: number | undefined;
+    let boundTg: TelegramWebApp | undefined;
 
     const syncTheme = () => {
+      const tg = window.Telegram?.WebApp;
       refreshAutoTheme();
       setColorScheme(resolveColorScheme());
       syncTelegramChromeForPath(window.location.pathname);
@@ -27,10 +32,15 @@ export function useTelegram() {
       }
     };
 
-    if (tg) {
+    const bindTelegram = (tg: TelegramWebApp) => {
+      if (disposed || boundTg) return;
+      boundTg = tg;
+      // Paint cached chrome before ready() — avoids Telegram default header flash.
+      applyEarlyTelegramChrome(window.location.pathname);
       // Call ready/expand only on first boot — repeating them on resume
       // can make Telegram WebView visually "reload" the mini-app.
-      if (!telegramReadyOnce) {
+      if (!telegramSdkInited) {
+        telegramSdkInited = true;
         tg.ready();
         tg.expand?.();
       }
@@ -44,8 +54,29 @@ export function useTelegram() {
       requestAnimationFrame(() => {
         syncTelegramChromeForPath(window.location.pathname);
       });
+    };
+
+    const existing = window.Telegram?.WebApp;
+    if (existing) {
+      bindTelegram(existing);
     } else {
+      // SDK is loaded async after first paint — wait briefly, then continue without it.
       syncTheme();
+      let tries = 0;
+      pollTimer = window.setInterval(() => {
+        tries += 1;
+        const tg = window.Telegram?.WebApp;
+        if (tg) {
+          window.clearInterval(pollTimer);
+          pollTimer = undefined;
+          bindTelegram(tg);
+          return;
+        }
+        if (tries >= 50) {
+          window.clearInterval(pollTimer);
+          pollTimer = undefined;
+        }
+      }, 40);
     }
 
     const unsubscribeResume = onAppResume((info) => {
@@ -54,7 +85,7 @@ export function useTelegram() {
       // After a long background, nudge expand once (without ready()).
       if (info.hiddenForMs >= 60_000) {
         try {
-          tg?.expand?.();
+          window.Telegram?.WebApp?.expand?.();
         } catch {
           // ignore
         }
@@ -65,9 +96,11 @@ export function useTelegram() {
     setIsReady(true);
 
     return () => {
+      disposed = true;
+      if (pollTimer) window.clearInterval(pollTimer);
       unsubscribeResume();
       stopLifecycle();
-      tg?.offEvent?.("themeChanged", syncTheme);
+      boundTg?.offEvent?.("themeChanged", syncTheme);
     };
   }, []);
 

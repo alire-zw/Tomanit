@@ -1,0 +1,8 @@
+/* Loaded only for non-Persian locales — keeps 718KB Apple.woff off the fa critical path. */
+@font-face {
+  font-family: "Apple";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/fonts/Apple.woff") format("woff");
+}

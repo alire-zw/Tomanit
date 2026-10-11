@@ -3,7 +3,9 @@ import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { prisma } from "../db/prisma.js";
 import { env } from "../config/env.js";
-import { requireAdmin, requireAuth } from "../middleware/auth.js";
+import { requireAdmin, requireAuth, requireAuthUpsert } from "../middleware/auth.js";
+import { sendBotStartToUser } from "../lib/botUpdates.js";
+import { ensurePayerWalletTxForCharge } from "../lib/merchantInvoiceWalletTx.js";
 import { parseIdParam } from "../lib/ids.js";
 import { ensureWallet } from "../lib/walletService.js";
 import { getAssetRateToman } from "../lib/swapwallet.js";
@@ -382,6 +384,26 @@ export async function paymentGatewayRoutes(app: FastifyInstance) {
           shopOwnerTelegramId =
             charge.merchantPaymentLink?.shop.user.telegramId ?? null;
         }
+        // Payer history — always create when this charge completes (even if link was already paid).
+        if (charge.merchantPaymentLink && !charge.walletTxId) {
+          await ensurePayerWalletTxForCharge(
+            {
+              id: charge.id,
+              code: charge.code,
+              userId: charge.userId,
+              amountToman: charge.amountToman,
+              feeToman: charge.feeToman,
+              trackId: String(body.trackId),
+              bankCardId: charge.bankCardId,
+              paidAt: body.paidAt ? new Date(body.paidAt) : new Date(),
+              createdAt: charge.createdAt,
+              walletTxId: null,
+              merchantPaymentLink: charge.merchantPaymentLink,
+              gateway: charge.gateway,
+            },
+            tx,
+          );
+        }
       } else {
         await ensureWallet(charge.userId);
         await tx.wallet.update({
@@ -461,6 +483,17 @@ export async function paymentGatewayRoutes(app: FastifyInstance) {
 
     return { ok: true, status: "completed" };
   });
+
+  /** When a payer opens an invoice in Mini App — send main-bot /start welcome. */
+  app.post(
+    "/merchant-pay/opened",
+    { preHandler: requireAuthUpsert },
+    async (request) => {
+      const user = request.user!;
+      void sendBotStartToUser(user.telegramId);
+      return { ok: true };
+    },
+  );
 
   await app.register(async (scoped) => {
     scoped.addHook("preHandler", requireAuth);

@@ -8,7 +8,7 @@
   },
   "servers": [
     {
-      "url": "https://vtb.mirall.ir/merchant/v1",
+      "url": "https://api.tunne.lol/merchant/v1",
       "description": "Production Merchant API v1"
     }
   ],

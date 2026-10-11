@@ -52,14 +52,10 @@
   color: var(--accent-contrast, #fff);
 }
 
-.mpr__status-mark--ok {
-  background: #fbbf24;
-  color: #1a1400;
-}
-
+.mpr__status-mark--ok,
 .mpr__status-mark--fail {
-  background: color-mix(in srgb, #fecaca 22%, transparent);
-  color: #fecaca;
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
 }
 
 .mpr__status-mark--pending {
@@ -95,11 +91,17 @@
   font-weight: 900;
   letter-spacing: -0.04em;
   line-height: 1.15;
-  color: var(--accent-contrast, #fff);
+  color: #fff;
 }
 
-.mpr--ok .mpr__status-title {
-  color: #fbbf24;
+.mpr--ok .mpr__status-kicker,
+.mpr--fail .mpr__status-kicker {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.mpr--ok .mpr__status-title,
+.mpr--fail .mpr__status-title {
+  color: #fff;
 }
 
 .mpr__amount-block {
@@ -133,14 +135,14 @@
   font-weight: 900;
   letter-spacing: -0.03em;
   line-height: 1.05;
-  color: #fbbf24;
+  color: #fff;
   font-variant-numeric: tabular-nums;
 }
 
 .mpr__amount-unit {
   font-size: 15px;
   font-weight: 600;
-  color: color-mix(in srgb, var(--accent-contrast, #fff) 62%, transparent);
+  color: rgba(255, 255, 255, 0.72);
 }
 
 .mpr__lead {
@@ -150,7 +152,12 @@
   font-weight: 500;
   letter-spacing: 0.01em;
   line-height: 1.55;
-  color: color-mix(in srgb, var(--accent-contrast, #fff) 68%, transparent);
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.mpr--ok .mpr__amount-label,
+.mpr--fail .mpr__amount-label {
+  color: #fff;
 }
 
 .mpr__sheet {
@@ -297,9 +304,26 @@
   border-radius: 6px;
 }
 
-/* Same fail red in light + dark (matches Telegram Mini App header chrome). */
+/* Fixed result colors — not seller invoice accent (same light + dark). */
+.mpr--ok {
+  background: #16a34a;
+}
+
 .mpr--fail {
   background: #dc2626;
+}
+
+/* Channel / bot badge follows result status (not seller accent). */
+.mpr--ok .mpay__channel-btn {
+  border-color: color-mix(in srgb, #16a34a 32%, var(--border-subtle));
+  background: color-mix(in srgb, #16a34a 12%, var(--surface));
+  color: #16a34a;
+}
+
+.mpr--fail .mpay__channel-btn {
+  border-color: color-mix(in srgb, #dc2626 32%, var(--border-subtle));
+  background: color-mix(in srgb, #dc2626 12%, var(--surface));
+  color: #dc2626;
 }
 
 /* Expired invoice — yellow leaning orange (same light + dark). */

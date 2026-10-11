@@ -10,9 +10,11 @@ import {
 import {
   applyDocumentLocale,
   bootstrapI18n,
+  ensureLocaleLoaded,
   getLocaleMeta,
   isLocaleCode,
   isRtlLocale,
+  preloadLocale,
   readStoredLocale,
   setActiveLocale,
   translate,
@@ -50,6 +52,11 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   const setLocale = useCallback((code: LocaleCode, options?: { persist?: boolean }) => {
     writeStoredLocale(code);
     setActiveLocale(code);
+    // Prefer already-loaded dict; otherwise warm it then re-render.
+    void ensureLocaleLoaded(code).then(() => {
+      setActiveLocale(code);
+      setLocaleState(code);
+    });
     setLocaleState(code);
     if (options?.persist === false) return;
     void apiFetch("/me", {
@@ -70,13 +77,21 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   }, [locale]);
 
   useEffect(() => {
-    setActiveLocale(readStoredLocale());
+    const preferred = readStoredLocale();
+    setActiveLocale(preferred);
+    if (preferred !== "fa") {
+      void ensureLocaleLoaded(preferred).then(() => {
+        setActiveLocale(preferred);
+        setLocaleState(preferred);
+      });
+    }
   }, []);
 
   useEffect(() => {
     const onServerLocale = (event: Event) => {
       const code = (event as CustomEvent<string>).detail;
       if (!isLocaleCode(code) || code === locale) return;
+      preloadLocale(code);
       setLocale(code, { persist: false });
     };
     window.addEventListener(LOCALE_EVENT, onServerLocale);

@@ -49,13 +49,13 @@
   width: 48px;
   height: 48px;
   border-radius: 14px;
-  background: color-mix(in srgb, var(--accent) 14%, transparent);
-  color: var(--accent);
+  background: color-mix(in srgb, #16a34a 14%, transparent);
+  color: #16a34a;
 }
 
 .wallet-wsucc__banner--error .wallet-wsucc__mark {
-  background: color-mix(in srgb, #dc4446 14%, transparent);
-  color: #dc4446;
+  background: color-mix(in srgb, #dc2626 14%, transparent);
+  color: #dc2626;
 }
 
 .wallet-wsucc__mark svg {

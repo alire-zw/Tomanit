@@ -96,6 +96,16 @@ function getBadgeClass(tx: WalletTransaction): string {
   return "wallet__transaction-badge";
 }
 
+function invoiceShopMeta(tx: WalletTransaction): {
+  name: string;
+  logo: string | null;
+} | null {
+  if (tx.type !== "invoice") return null;
+  const name = (tx.shopName || tx.note || "").trim();
+  if (!name) return null;
+  return { name, logo: tx.shopLogoDataUrl?.trim() || null };
+}
+
 function txAssetLogo(asset: string): string {
   const key = asset.toLowerCase() === "irr" ? "toman" : asset.toLowerCase();
   return getWalletAssetDef(key)?.logo ?? "/coins/TOMAN.png";
@@ -489,11 +499,14 @@ export function WalletPage() {
         </div>
 
         <div
-          className="wallet__segment shop-rise"
+          className={`wallet__segment shop-rise${
+            activeTab === "history" ? " wallet__segment--history" : ""
+          }`}
           style={{ "--rise-index": 2 } as CSSProperties}
           role="tablist"
           aria-label={t("wallet.sectionAria")}
         >
+          <span className="wallet__segment-indicator" aria-hidden />
           <button
             type="button"
             role="tab"
@@ -517,7 +530,12 @@ export function WalletPage() {
 
       <div className="wallet__tab-panel shop-rise" style={{ "--rise-index": 3 } as CSSProperties}>
         {activeTab === "assets" ? (
-          <div className="wallet__assets" role="tabpanel" aria-label={t("wallet.assets")}>
+          <div
+            key="assets"
+            className="wallet__assets"
+            role="tabpanel"
+            aria-label={t("wallet.assets")}
+          >
             {ratesError && !ratesReady ? (
               <EmptyState
                 title={t("wallet.ratesUnavailable")}
@@ -532,7 +550,7 @@ export function WalletPage() {
                 }
               />
             ) : (
-              sortedAssets.map((asset) => {
+              sortedAssets.map((asset, index) => {
                 const balance = assetBalance(asset.id);
                 const isToman = asset.id === "toman";
                 const rate = rateFor(asset.id);
@@ -552,6 +570,7 @@ export function WalletPage() {
                         ? " wallet__asset-change--down"
                         : " wallet__asset-change--flat";
                 const clickable = asset.hasCoinPage;
+                const itemStyle = { "--wallet-item-index": index } as CSSProperties;
                 const body = (
                   <>
                     <img
@@ -619,13 +638,18 @@ export function WalletPage() {
                   <button
                     key={asset.id}
                     type="button"
-                    className="wallet__asset wallet__asset--clickable"
+                    className="wallet__asset wallet__asset--clickable wallet__tab-item"
+                    style={itemStyle}
                     onClick={() => openAsset(asset.id, true)}
                   >
                     {body}
                   </button>
                 ) : (
-                  <div key={asset.id} className="wallet__asset">
+                  <div
+                    key={asset.id}
+                    className="wallet__asset wallet__tab-item"
+                    style={itemStyle}
+                  >
                     {body}
                   </div>
                 );
@@ -633,7 +657,12 @@ export function WalletPage() {
             )}
           </div>
         ) : (
-          <div className="wallet__transactions" role="tabpanel" aria-label={t("wallet.transactions")}>
+          <div
+            key="history"
+            className="wallet__transactions"
+            role="tabpanel"
+            aria-label={t("wallet.transactions")}
+          >
             {txError ? (
               <EmptyState
                 title={txError}
@@ -645,7 +674,11 @@ export function WalletPage() {
               />
             ) : showSkeleton ? (
               [0, 1, 2, 3].map((index) => (
-                <div key={index} className="wallet__transaction wallet__transaction--skeleton">
+                <div
+                  key={index}
+                  className="wallet__transaction wallet__transaction--skeleton wallet__tab-item"
+                  style={{ "--wallet-item-index": index } as CSSProperties}
+                >
                   <div className="wallet__transaction-start">
                     <span className="wallet__transaction-skeleton-icon" />
                     <div className="wallet__transaction-info">
@@ -659,13 +692,16 @@ export function WalletPage() {
             ) : hasFetched && txs.length === 0 ? (
               <EmptyState title={t("wallet.emptyHistory")} />
             ) : (
-              txs.map((tx) => {
+              txs.map((tx, index) => {
                 const equiv = formatTxEquiv(tx, rates.usdt ?? null, t);
+                const shop = invoiceShopMeta(tx);
+                const title = shop?.name || txTypeLabel(tx.type);
                 return (
                   <button
                     key={tx.id}
                     type="button"
-                    className="wallet__transaction wallet__transaction--clickable"
+                    className="wallet__transaction wallet__transaction--clickable wallet__tab-item"
+                    style={{ "--wallet-item-index": index } as CSSProperties}
                     onClick={() => {
                       haptic("light");
                       setSelectedTx(tx);
@@ -674,20 +710,37 @@ export function WalletPage() {
                   >
                     <div className="wallet__transaction-start">
                       <span className="wallet__transaction-logo-wrap" aria-hidden>
-                        <img
-                          className="wallet__transaction-logo"
-                          src={txAssetLogo(tx.asset)}
-                          alt=""
-                          width={32}
-                          height={32}
-                          decoding="async"
-                        />
+                        {shop ? (
+                          shop.logo ? (
+                            <img
+                              className="wallet__transaction-logo wallet__transaction-logo--shop"
+                              src={shop.logo}
+                              alt=""
+                              width={32}
+                              height={32}
+                              decoding="async"
+                            />
+                          ) : (
+                            <span className="wallet__transaction-shop-fallback">
+                              {shop.name.slice(0, 1)}
+                            </span>
+                          )
+                        ) : (
+                          <img
+                            className="wallet__transaction-logo"
+                            src={txAssetLogo(tx.asset)}
+                            alt=""
+                            width={32}
+                            height={32}
+                            decoding="async"
+                          />
+                        )}
                         <span className={getBadgeClass(tx)}>
                           <TransactionBadgeIcon tx={tx} />
                         </span>
                       </span>
                       <div className="wallet__transaction-info">
-                        <div className="wallet__transaction-title">{txTypeLabel(tx.type)}</div>
+                        <div className="wallet__transaction-title">{title}</div>
                         <div className="wallet__transaction-date">{formatFaDate(tx.createdAt)}</div>
                       </div>
                     </div>

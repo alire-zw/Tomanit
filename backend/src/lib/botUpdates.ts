@@ -221,6 +221,33 @@ async function handleStart(message: TgMessage): Promise<void> {
   await sendLanguagePicker(message.chat.id);
 }
 
+/**
+ * Send the same /start flow (language picker or welcome) to a user from Mini App
+ * (e.g. when they open a merchant invoice). Failures are logged, never thrown.
+ */
+export async function sendBotStartToUser(
+  telegramId: string | number,
+): Promise<void> {
+  const chatId = Number(telegramId);
+  if (!Number.isFinite(chatId) || chatId <= 0) return;
+  try {
+    const user = await findUserByTelegramId(String(telegramId));
+    if (hasChosenBotLanguage(user?.languageCode)) {
+      await sendWelcome(chatId, user!.languageCode!);
+    } else {
+      await sendLanguagePicker(chatId);
+    }
+    log.event("start", `miniapp → tg:${telegramId}`);
+  } catch (err) {
+    log.warn(
+      "start",
+      `miniapp fail tg:${telegramId} — ${
+        err instanceof Error ? err.message : String(err)
+      }`,
+    );
+  }
+}
+
 async function ensureUser(from: TgUser): Promise<void> {
   await upsertUserFromBotStart({
     id: from.id,

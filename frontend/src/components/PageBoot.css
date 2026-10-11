@@ -1,0 +1,12 @@
+/* React Suspense underlay — logo splash is the HTML #boot-splash layer. */
+.app-splash--fallback {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  background: var(--bg, #eef6f5);
+  pointer-events: none;
+}
+
+html[data-theme="dark"] .app-splash--fallback {
+  background: var(--bg, #0c0e0e);
+}

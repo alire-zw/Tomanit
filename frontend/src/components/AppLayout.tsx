@@ -5,11 +5,13 @@ import { ChannelLockGate } from "./ChannelLockGate";
 import { Header } from "./Header";
 import { useTelegram } from "../hooks/useTelegram";
 import {
-  invoiceTokenFromStartParam,
   isStartParamConsumed,
   readTelegramStartParam,
+  routeFromStartParam,
   START_PARAM_CONSUMED_KEY,
 } from "../lib/bootInvoiceDeepLink";
+import { dismissBootSplash } from "../lib/bootSplash";
+import { prefetchMainTabs } from "../lib/routePrefetch";
 import { syncTelegramChromeForPath } from "../lib/telegramTheme";
 import "../App.css";
 
@@ -25,10 +27,10 @@ const noBottomNavPrefixes = [
 ];
 const noBottomNavExact = ["/notifications"];
 
-function hasPendingInvoiceStartParam(): boolean {
+function hasPendingStartParamRoute(): boolean {
   const raw = readTelegramStartParam();
   if (!raw || isStartParamConsumed(raw)) return false;
-  return Boolean(invoiceTokenFromStartParam(raw));
+  return Boolean(routeFromStartParam(raw));
 }
 
 export function AppLayout() {
@@ -43,7 +45,7 @@ export function AppLayout() {
   const pendingInvoiceDeepLink = useMemo(() => {
     const path = pathname.replace(/\/+$/, "") || "/";
     if (path !== "/") return false;
-    return hasPendingInvoiceStartParam();
+    return hasPendingStartParamRoute();
   }, [pathname, startParamTick]);
 
   const hideBottomNav =
@@ -77,15 +79,40 @@ export function AppLayout() {
     syncTelegramChromeForPath(pathname);
   }, [pathname]);
 
+  /** First real screen is ready — fade the boot splash out softly. */
+  useEffect(() => {
+    dismissBootSplash();
+  }, []);
+
+  /** Warm main tab chunks ASAP so the first switch isn't a cold load. */
+  useEffect(() => {
+    const warm = () => prefetchMainTabs();
+    const ric = (
+      window as Window & {
+        requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+      }
+    ).requestIdleCallback;
+    if (typeof ric === "function") {
+      const id = ric(warm, { timeout: 800 });
+      return () => {
+        (
+          window as Window & { cancelIdleCallback?: (id: number) => void }
+        ).cancelIdleCallback?.(id);
+      };
+    }
+    const timer = window.setTimeout(warm, 250);
+    return () => window.clearTimeout(timer);
+  }, []);
+
   /** Poll briefly — some clients expose start_param after ready(). */
   useEffect(() => {
     const path = pathname.replace(/\/+$/, "") || "/";
     if (path !== "/") return;
-    if (hasPendingInvoiceStartParam()) return;
+    if (hasPendingStartParamRoute()) return;
     let tries = 0;
     const id = window.setInterval(() => {
       tries += 1;
-      if (hasPendingInvoiceStartParam()) {
+      if (hasPendingStartParamRoute()) {
         setStartParamTick((n) => n + 1);
         window.clearInterval(id);
         return;
@@ -95,7 +122,7 @@ export function AppLayout() {
     return () => window.clearInterval(id);
   }, [pathname, isReady]);
 
-  /** Fallback navigate when launched via t.me/...?startapp=inv_TOKEN */
+  /** Fallback navigate when launched via t.me/...?startapp=… */
   useEffect(() => {
     if (pathname === "/p/result" || pathname === "/pay/result") {
       return;
@@ -103,15 +130,14 @@ export function AppLayout() {
     const raw = readTelegramStartParam();
     if (!raw) return;
     if (isStartParamConsumed(raw)) return;
-    const token = invoiceTokenFromStartParam(raw);
-    if (!token) return;
+    const target = routeFromStartParam(raw);
+    if (!target) return;
     try {
       sessionStorage.setItem(START_PARAM_CONSUMED_KEY, raw);
     } catch {
       // ignore
     }
-    const target = `/p/${encodeURIComponent(token)}`;
-    if (pathname === target || pathname === `/pay/${token}`) return;
+    if (pathname === target) return;
     navigate(target, { replace: true });
   }, [navigate, pathname, isReady, startParamTick]);
 

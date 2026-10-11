@@ -8,6 +8,17 @@ export function invoiceTokenFromStartParam(raw: string): string | null {
   return matched?.[1] ?? null;
 }
 
+/** Map startapp → in-app route (report bot settings, invoices, …). */
+export function routeFromStartParam(raw: string): string | null {
+  const value = raw.trim();
+  if (/^reportbot$/i.test(value) || /^shop_report_bot$/i.test(value)) {
+    return "/shop/report-bot";
+  }
+  const token = invoiceTokenFromStartParam(value);
+  if (token) return `/p/${encodeURIComponent(token)}`;
+  return null;
+}
+
 export function readTelegramStartParam(): string | null {
   try {
     const fromTg = window.Telegram?.WebApp?.initDataUnsafe?.start_param?.trim();
@@ -42,25 +53,30 @@ export function isStartParamConsumed(raw: string): boolean {
 }
 
 /**
- * Before React mounts: if Mini App was opened with an invoice start_param,
- * rewrite the URL so the first painted route is /p/:token (not wallet home).
+ * Before React mounts: if Mini App was opened with a start_param,
+ * rewrite the URL so the first painted route matches (not wallet flash).
  */
 export function bootInvoiceDeepLink(): string | null {
   if (typeof window === "undefined") return null;
 
   const path = window.location.pathname.replace(/\/+$/, "") || "/";
-  // Already on pay route — nothing to do.
-  if (path === "/p" || path.startsWith("/p/") || path === "/pay" || path.startsWith("/pay/")) {
+  // Already on a deep target — nothing to do.
+  if (
+    path === "/p" ||
+    path.startsWith("/p/") ||
+    path === "/pay" ||
+    path.startsWith("/pay/") ||
+    path === "/shop/report-bot"
+  ) {
     return null;
   }
 
   const raw = readTelegramStartParam();
   if (!raw || isStartParamConsumed(raw)) return null;
 
-  const token = invoiceTokenFromStartParam(raw);
-  if (!token) return null;
+  const target = routeFromStartParam(raw);
+  if (!target) return null;
 
-  const target = `/p/${encodeURIComponent(token)}`;
   markStartParamConsumed(raw);
   const next = `${target}${window.location.search}${window.location.hash}`;
   window.history.replaceState(window.history.state, "", next);

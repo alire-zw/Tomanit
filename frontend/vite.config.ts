@@ -15,6 +15,31 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react()],
+    build: {
+      target: "es2022",
+      cssCodeSplit: true,
+      modulePreload: { polyfill: false },
+      minify: "esbuild",
+      reportCompressedSize: false,
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (!id.includes("node_modules")) return;
+            if (
+              id.includes("react-dom") ||
+              id.includes("react-router") ||
+              id.includes("\\react\\") ||
+              id.includes("/react/")
+            ) {
+              return "vendor-react";
+            }
+            if (id.includes("i18next") || id.includes("react-i18next")) {
+              return "vendor-i18n";
+            }
+          },
+        },
+      },
+    },
     server: {
       port,
       strictPort: true,

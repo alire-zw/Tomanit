@@ -321,6 +321,19 @@ export function WalletTomanPage() {
         ) : (
           assetTxs.map((tx) => {
             const amount = formatTomanTxAmount(tx);
+            const shopName =
+              tx.type === "invoice"
+                ? (tx.shopName || tx.note || "").trim()
+                : "";
+            const shopLogo =
+              tx.type === "invoice" ? tx.shopLogoDataUrl?.trim() || null : null;
+            const title =
+              shopName ||
+              (() => {
+                const key = `tx.${tx.type}`;
+                const label = t(key);
+                return label === key ? tx.type : label;
+              })();
             return (
               <button
                 key={tx.id}
@@ -334,17 +347,35 @@ export function WalletTomanPage() {
                 }}
               >
                 <div className="coin-page__tx-start">
-                  <span className={assetTxIconClass(tx)}>
-                    <AssetTxIcon tx={tx} />
-                  </span>
+                  {shopName ? (
+                    <span className="coin-page__tx-shop-wrap" aria-hidden>
+                      {shopLogo ? (
+                        <img
+                          className="coin-page__tx-shop-logo"
+                          src={shopLogo}
+                          alt=""
+                          width={30}
+                          height={30}
+                          decoding="async"
+                        />
+                      ) : (
+                        <span className="coin-page__tx-shop-fallback">
+                          {shopName.slice(0, 1)}
+                        </span>
+                      )}
+                      <span
+                        className={`${assetTxIconClass(tx)} coin-page__tx-shop-badge`}
+                      >
+                        <AssetTxIcon tx={tx} />
+                      </span>
+                    </span>
+                  ) : (
+                    <span className={assetTxIconClass(tx)}>
+                      <AssetTxIcon tx={tx} />
+                    </span>
+                  )}
                   <div className="coin-page__tx-info">
-                    <div className="coin-page__tx-title">
-                      {(() => {
-                        const key = `tx.${tx.type}`;
-                        const label = t(key);
-                        return label === key ? tx.type : label;
-                      })()}
-                    </div>
+                    <div className="coin-page__tx-title">{title}</div>
                     <div className="coin-page__tx-date">
                       {formatFaDate(tx.createdAt)}
                     </div>

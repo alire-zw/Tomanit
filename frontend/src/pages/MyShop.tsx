@@ -35,17 +35,8 @@ type Tile = {
   Icon: ComponentType<{ width?: number; height?: number; size?: number; variant?: string }>;
 };
 
-/** Rows: 1 · 2 · 1 · 2 — full-size cells, no shrinking */
+/** Rows: 2 · 1 · 2 · 1 · 2 — manual invoice alone on row 2; report bot above API/settings */
 const NAV_ROWS: Tile[][] = [
-  [
-    {
-      id: "payment-links",
-      labelKey: "myShop.tilePaymentLinks",
-      hintKey: "myShop.tilePaymentLinksHint",
-      path: "/shop/payment-links",
-      Icon: Invoice04Icon,
-    },
-  ],
   [
     {
       id: "transactions",
@@ -64,14 +55,21 @@ const NAV_ROWS: Tile[][] = [
   ],
   [
     {
+      id: "payment-links",
+      labelKey: "myShop.tilePaymentLinks",
+      hintKey: "myShop.tilePaymentLinksHint",
+      path: "/shop/payment-links",
+      Icon: Invoice04Icon,
+    },
+  ],
+  [
+    {
       id: "stores",
       labelKey: "myShop.tileStores",
       hintKey: "myShop.tileStoresHint",
       path: "/shop/stores",
       Icon: CashierIcon,
     },
-  ],
-  [
     {
       id: "stats",
       labelKey: "myShop.tileStats",
@@ -79,6 +77,17 @@ const NAV_ROWS: Tile[][] = [
       path: "/shop/stats",
       Icon: ChartRoseIcon,
     },
+  ],
+  [
+    {
+      id: "report-bot",
+      labelKey: "myShop.tileReportBot",
+      hintKey: "myShop.tileReportBotHint",
+      path: "/shop/report-bot",
+      Icon: Robot01Icon,
+    },
+  ],
+  [
     {
       id: "api",
       labelKey: "myShop.tileApi",
@@ -86,21 +95,12 @@ const NAV_ROWS: Tile[][] = [
       path: "/shop/api",
       Icon: ApiIcon,
     },
-  ],
-  [
     {
       id: "gateway-settings",
       labelKey: "myShop.tileGatewaySettings",
       hintKey: "myShop.tileGatewaySettingsHint",
       path: "/shop/settings",
       Icon: Settings01Icon,
-    },
-    {
-      id: "report-bot",
-      labelKey: "myShop.tileReportBot",
-      hintKey: "myShop.tileReportBotHint",
-      path: "/shop/report-bot",
-      Icon: Robot01Icon,
     },
   ],
 ];

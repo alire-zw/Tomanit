@@ -1,9 +1,4 @@
-import { ar } from "./locales/ar";
-import { de } from "./locales/de";
-import { en } from "./locales/en";
 import { fa, type FaMessages } from "./locales/fa";
-import { ru } from "./locales/ru";
-import { zh } from "./locales/zh";
 import {
   DEFAULT_LOCALE,
   LOCALE_STORAGE_KEY,
@@ -22,14 +17,47 @@ export {
   localeToBcp47,
 } from "./types";
 
-const dictionaries: Record<LocaleCode, FaMessages> = {
-  fa,
-  ar,
-  en,
-  zh,
-  ru,
-  de,
+type LocaleLoader = () => Promise<FaMessages>;
+
+/** Persian ships in the main bundle; other languages load on demand. */
+const localeLoaders: Record<LocaleCode, LocaleLoader> = {
+  fa: async () => fa,
+  ar: async () => (await import("./locales/ar")).ar,
+  en: async () => (await import("./locales/en")).en,
+  zh: async () => (await import("./locales/zh")).zh,
+  ru: async () => (await import("./locales/ru")).ru,
+  de: async () => (await import("./locales/de")).de,
 };
+
+const loadedLocales: Partial<Record<LocaleCode, FaMessages>> = {
+  fa,
+};
+
+const localePromises = new Map<LocaleCode, Promise<FaMessages>>();
+
+export async function ensureLocaleLoaded(code: LocaleCode): Promise<FaMessages> {
+  const existing = loadedLocales[code];
+  if (existing) return existing;
+
+  let pending = localePromises.get(code);
+  if (!pending) {
+    pending = localeLoaders[code]().then((dict) => {
+      loadedLocales[code] = dict;
+      localePromises.delete(code);
+      return dict;
+    });
+    localePromises.set(code, pending);
+  }
+  return pending;
+}
+
+/** Kick off a locale download without awaiting (warm cache). */
+export function preloadLocale(code: LocaleCode): void {
+  if (code === "fa" || loadedLocales[code]) return;
+  void ensureLocaleLoaded(code).catch(() => {
+    // ignore — translate() will fall back to fa
+  });
+}
 
 let activeLocale: LocaleCode = DEFAULT_LOCALE;
 
@@ -66,6 +94,10 @@ export function applyDocumentLocale(code: LocaleCode = activeLocale) {
   document.documentElement.setAttribute("lang", code);
   document.documentElement.setAttribute("dir", meta.dir);
   document.documentElement.dataset.locale = code;
+  // Keep 718KB Apple.woff off the Persian critical path.
+  if (code !== "fa") {
+    void import("../lib/latinFont").then((m) => m.ensureLatinFont());
+  }
 }
 
 function getByPath(source: unknown, path: string): unknown {
@@ -84,8 +116,9 @@ export function translate(
   key: string,
   params?: TranslateParams,
 ): string {
-  const fromLocale = getByPath(dictionaries[locale], key);
-  const fromFallback = getByPath(dictionaries.fa, key);
+  const dict = loadedLocales[locale] ?? loadedLocales.fa ?? fa;
+  const fromLocale = getByPath(dict, key);
+  const fromFallback = getByPath(fa, key);
   let text =
     typeof fromLocale === "string"
       ? fromLocale
@@ -107,7 +140,13 @@ export function t(key: string, params?: TranslateParams): string {
 }
 
 export function bootstrapI18n() {
-  const locale = typeof window !== "undefined" ? readStoredLocale() : DEFAULT_LOCALE;
+  const locale =
+    typeof window !== "undefined" ? readStoredLocale() : DEFAULT_LOCALE;
+
+  // Apply dir/lang immediately; if locale isn't loaded yet, fal back to fa strings.
   setActiveLocale(locale);
+  if (locale !== "fa") {
+    preloadLocale(locale);
+  }
   return locale;
 }

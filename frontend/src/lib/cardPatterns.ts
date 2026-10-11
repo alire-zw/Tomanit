@@ -30,13 +30,36 @@ export function getWalletHeroBackgroundStyle(patternUrl: CardPatternUrl | string
 
 let preloadStarted = false;
 
-/** Warm browser cache so the hero pattern paints on first render. */
-export function preloadCardPatterns(): void {
+/**
+ * Warm browser cache for the active hero pattern only.
+ * Loading all patterns on boot competed with first paint on slow networks.
+ */
+export function preloadCardPatterns(preferred?: CardPatternUrl | string): void {
   if (preloadStarted || typeof Image === "undefined") return;
   preloadStarted = true;
-  for (const url of CARD_PATTERN_URLS) {
-    const img = new Image();
-    img.decoding = "async";
-    img.src = url;
+  const first = preferred && CARD_PATTERN_URLS.includes(preferred as CardPatternUrl)
+    ? (preferred as CardPatternUrl)
+    : CARD_PATTERN_URLS[0]!;
+  const img = new Image();
+  img.decoding = "async";
+  img.src = first;
+  // Idle-warm the rest so later navigations stay snappy.
+  const warmRest = () => {
+    for (const url of CARD_PATTERN_URLS) {
+      if (url === first) continue;
+      const next = new Image();
+      next.decoding = "async";
+      next.src = url;
+    }
+  };
+  const ric = (
+    window as Window & {
+      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+    }
+  ).requestIdleCallback;
+  if (typeof ric === "function") {
+    ric(warmRest, { timeout: 2500 });
+  } else {
+    globalThis.setTimeout(warmRest, 1200);
   }
 }

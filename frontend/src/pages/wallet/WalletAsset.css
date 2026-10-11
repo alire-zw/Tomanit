@@ -441,6 +441,47 @@
   min-width: 0;
 }
 
+.coin-page__tx-shop-wrap {
+  position: relative;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+}
+
+.coin-page__tx-shop-logo,
+.coin-page__tx-shop-fallback {
+  display: block;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: var(--surface-elevated, var(--bg));
+}
+
+.coin-page__tx-shop-fallback {
+  display: grid;
+  place-items: center;
+  color: var(--accent);
+  font-size: 0.8rem;
+  font-weight: 700;
+  background: color-mix(in srgb, var(--accent) 16%, var(--bg));
+}
+
+.coin-page__tx-shop-badge {
+  position: absolute;
+  inset-inline-end: -4px;
+  bottom: -4px;
+  width: 16px !important;
+  height: 16px !important;
+  border-radius: 5px !important;
+  border: 1.5px solid var(--surface, var(--bg));
+}
+
+.coin-page__tx-shop-badge svg {
+  width: 9px;
+  height: 9px;
+}
+
 .coin-page__tx-icon {
   display: inline-flex;
   align-items: center;

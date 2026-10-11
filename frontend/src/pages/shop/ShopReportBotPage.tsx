@@ -89,11 +89,15 @@ export function ShopReportBotPage() {
   }, [load]);
 
   useEffect(() => {
-    if (waiting && data?.enabled) {
+    // /start only links the chat — activation stays in the mini app.
+    if (waiting && data?.linked) {
       stopPolling();
-      notify(t("myShop.reportBotActivated"), "success");
+      notify(
+        data.enabled ? t("myShop.reportBotActivated") : t("myShop.reportBotLinked"),
+        data.enabled ? "success" : "info",
+      );
     }
-  }, [waiting, data?.enabled, stopPolling, notify, t]);
+  }, [waiting, data?.linked, data?.enabled, stopPolling, notify, t]);
 
   const startLinking = () => {
     if (!data?.startUrl) return;
@@ -111,14 +115,19 @@ export function ShopReportBotPage() {
     }, LINK_POLL_MS);
   };
 
-  const toggle = async (enabled: boolean) => {
+  const available = data?.available ?? true;
+  const enabled = Boolean(data?.enabled);
+  const linked = Boolean(data?.linked);
+  const switchOn = enabled;
+
+  const setEnabled = async (nextEnabled: boolean) => {
     haptic("light");
     setBusy(true);
     try {
-      const next = await setShopReportBotEnabled(enabled);
+      const next = await setShopReportBotEnabled(nextEnabled);
       setData(next);
       notify(
-        enabled ? t("myShop.reportBotActivated") : t("myShop.reportBotDeactivated"),
+        nextEnabled ? t("myShop.reportBotActivated") : t("myShop.reportBotDeactivated"),
         "success",
       );
     } catch (err) {
@@ -128,19 +137,39 @@ export function ShopReportBotPage() {
     }
   };
 
-  const available = data?.available ?? true;
-  const enabled = Boolean(data?.enabled);
-  const linked = Boolean(data?.linked);
-  const statusKey = enabled
-    ? "myShop.reportBotStatusOn"
-    : linked
-      ? "myShop.reportBotStatusPaused"
-      : "myShop.reportBotStatusOff";
-  const statusClass = enabled
-    ? "shop-rbot__status shop-rbot__status--on"
-    : linked
-      ? "shop-rbot__status shop-rbot__status--paused"
-      : "shop-rbot__status";
+  const onToggle = () => {
+    if (loading || busy || !available) return;
+    if (!linked) {
+      if (!data?.startUrl) return;
+      startLinking();
+      return;
+    }
+    void setEnabled(!enabled);
+  };
+
+  const onOpenBot = () => {
+    if (!data?.startUrl) return;
+    haptic("light");
+    if (!linked) {
+      startLinking();
+      return;
+    }
+    openTelegram(data.startUrl.replace(/\?start=.*$/, ""));
+  };
+  const statusKey = waiting
+    ? "myShop.reportBotWaiting"
+    : enabled
+      ? "myShop.reportBotStatusOn"
+      : linked
+        ? "myShop.reportBotStatusPaused"
+        : "myShop.reportBotStatusOff";
+  const statusClass = waiting
+    ? "shop-rbot__status shop-rbot__status--paused"
+    : enabled
+      ? "shop-rbot__status shop-rbot__status--on"
+      : linked
+        ? "shop-rbot__status shop-rbot__status--paused"
+        : "shop-rbot__status";
 
   const features = [
     { Icon: MoneyReceiveSquareIcon, title: "myShop.reportBotFeatAmounts", desc: "myShop.reportBotFeatAmountsDesc" },
@@ -157,27 +186,58 @@ export function ShopReportBotPage() {
 
       <div className="my-shop__body">
         <section
-          className="shop-rbot__hero shop-rise"
+          className="shop-rbot__bar shop-rise"
           style={{ "--rise-index": 1 } as CSSProperties}
+          aria-label={t("myShop.tileReportBot")}
         >
           <span
-            className={`shop-rbot__hero-icon${enabled ? " shop-rbot__hero-icon--on" : ""}`}
+            className={`shop-rbot__icon${enabled ? " shop-rbot__icon--on" : ""}`}
             aria-hidden
           >
-            <Robot01Icon variant="bulk-rounded" size={30} color="currentColor" />
+            <Robot01Icon variant="bulk-rounded" size={22} color="currentColor" />
           </span>
-          <h2 className="shop-rbot__hero-title">{t("myShop.reportBotTitle")}</h2>
-          <p className="shop-rbot__hero-desc">{t("myShop.reportBotDesc")}</p>
-          <span className={statusClass}>
-            <span className="shop-rbot__status-dot" aria-hidden />
-            {loading ? t("common.loading") : t(statusKey)}
-          </span>
-          {data?.botUsername ? (
-            <span className="shop-rbot__handle" dir="ltr">
-              @{data.botUsername}
+
+          <div className="shop-rbot__bar-status">
+            <span className={statusClass}>
+              <span className="shop-rbot__status-dot" aria-hidden />
+              {loading ? t("common.loading") : t(statusKey)}
             </span>
-          ) : null}
+            {data?.botUsername ? (
+              <span className="shop-rbot__handle" dir="ltr">
+                @{data.botUsername}
+              </span>
+            ) : null}
+          </div>
+
+          <button
+            type="button"
+            className="shop-rbot__open"
+            disabled={loading || !available || !data?.startUrl}
+            onClick={onOpenBot}
+          >
+            {t("myShop.reportBotOpen")}
+          </button>
+
+          <button
+            type="button"
+            className={`shop-rbot__switch${switchOn ? " is-on" : ""}`}
+            role="switch"
+            aria-checked={enabled}
+            aria-label={
+              enabled ? t("myShop.reportBotDeactivate") : t("myShop.reportBotActivate")
+            }
+            disabled={loading || busy || !available || (!linked && !data?.startUrl)}
+            onClick={onToggle}
+          >
+            <span className="shop-rbot__switch-thumb" aria-hidden />
+          </button>
         </section>
+
+        {!available ? (
+          <p className="my-shop__hint shop-rise" style={{ "--rise-index": 2 } as CSSProperties}>
+            {t("myShop.reportBotUnavailable")}
+          </p>
+        ) : null}
 
         <section
           className="shop-stats__panel shop-rise"
@@ -220,55 +280,6 @@ export function ShopReportBotPage() {
             </ol>
           </section>
         ) : null}
-
-        {!available ? (
-          <p className="my-shop__hint shop-rise" style={{ "--rise-index": 4 } as CSSProperties}>
-            {t("myShop.reportBotUnavailable")}
-          </p>
-        ) : null}
-
-        <div className="shop-rbot__actions shop-rise" style={{ "--rise-index": 4 } as CSSProperties}>
-          {!linked ? (
-            <button
-              type="button"
-              className="my-shop__cta"
-              disabled={loading || !available || !data?.startUrl}
-              onClick={startLinking}
-            >
-              {waiting ? t("myShop.reportBotWaiting") : t("myShop.reportBotActivate")}
-            </button>
-          ) : enabled ? (
-            <button
-              type="button"
-              className="my-shop__cta my-shop__cta--secondary"
-              disabled={busy}
-              onClick={() => void toggle(false)}
-            >
-              {busy ? t("common.loading") : t("myShop.reportBotDeactivate")}
-            </button>
-          ) : (
-            <button
-              type="button"
-              className="my-shop__cta"
-              disabled={busy || !available}
-              onClick={() => void toggle(true)}
-            >
-              {busy ? t("common.loading") : t("myShop.reportBotReactivate")}
-            </button>
-          )}
-          {linked && data?.startUrl ? (
-            <button
-              type="button"
-              className="my-shop__cta my-shop__cta--secondary"
-              onClick={() => {
-                haptic("light");
-                openTelegram(data.startUrl!.replace(/\?start=.*$/, ""));
-              }}
-            >
-              {t("myShop.reportBotOpen")}
-            </button>
-          ) : null}
-        </div>
       </div>
     </div>
   );

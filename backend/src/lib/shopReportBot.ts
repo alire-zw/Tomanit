@@ -1,8 +1,9 @@
 import { env } from "../config/env.js";
 import { prisma } from "../db/prisma.js";
 import { log } from "./log.js";
+import { getBotUsername, resolveBotUsername } from "./botUsername.js";
 import { callTelegramApiWithToken } from "./telegramApi.js";
-import { getBotUsername } from "./botUsername.js";
+import { REPORT_BOT_EMOJI, tgPremiumEmoji } from "./bot/premiumEmoji.js";
 
 /**
  * Shop report bot — a separate Telegram bot (SHOP_REPORT_BOT_TOKEN) that sends
@@ -96,14 +97,19 @@ function resolveLocale(languageCode: string | null | undefined): Locale {
   return base === "fa" ? "fa" : "en";
 }
 
+function mono(value: string): string {
+  return `<code>${value}</code>`;
+}
+
 function formatToman(amount: number, locale: Locale): string {
   const n = Math.max(0, Math.trunc(amount)).toLocaleString("en-US");
-  return locale === "fa" ? `${n} تومان` : `${n} toman`;
+  const unit = locale === "fa" ? "تومان" : "toman";
+  return `${mono(n)} ${unit}`;
 }
 
 function formatDateTime(date: Date, locale: Locale): string {
   try {
-    return new Intl.DateTimeFormat(
+    const formatted = new Intl.DateTimeFormat(
       locale === "fa" ? "fa-IR-u-ca-persian-nu-latn" : "en-GB",
       {
         timeZone: "Asia/Tehran",
@@ -116,6 +122,8 @@ function formatDateTime(date: Date, locale: Locale): string {
         hour12: false,
       },
     ).format(date);
+    // e.g. 1405/07/19 - 03:28:40
+    return formatted.replace(/,\s*/, " - ");
   } catch {
     return date.toISOString();
   }
@@ -127,110 +135,152 @@ function formatCard(cardNumber: string | null | undefined): string | null {
   return digits.replace(/(\d{4})(?=\d)/g, "$1-");
 }
 
+const E = REPORT_BOT_EMOJI;
+
+function pe(key: keyof typeof E): string {
+  return tgPremiumEmoji(E[key].fallback, E[key].id);
+}
+
 const TEXT = {
   fa: {
-    linkedTitle: "🤖 <b>ربات گزارش فعال شد</b>",
-    linkedBody: (shop: string) =>
-      `از این پس هر تراکنش موفق فروشگاه <b>${shop}</b> با جزئیات کامل در همین‌جا برای شما ارسال می‌شود.`,
-    disabledTitle: "⏸ <b>ربات گزارش غیرفعال شد</b>",
-    disabledBody: "دیگر گزارش تراکنش‌ها ارسال نمی‌شود. هر زمان خواستید دوباره فعالش کنید.",
+    welcomeOn: (shop: string) =>
+      [
+        `${pe("check")} <b>ربات گزارش آماده است</b>`,
+        "",
+        `${pe("bell")} گزارش‌های فروشگاه <b>${shop}</b> فعال‌اند.`,
+        "هر تراکنش موفق با جزئیات کامل همین‌جا برایتان ارسال می‌شود.",
+      ].join("\n"),
+    welcomeOff: (shop: string) =>
+      [
+        `${pe("bell")} <b>ربات گزارش غیرفعال است</b>`,
+        "",
+        `${pe("alert")} حساب شما به فروشگاه <b>${shop}</b> وصل شد، ولی ارسال گزارش هنوز خاموش است.`,
+        "برای فعال‌سازی، از مینی‌اپ تومانیت سوییچ ربات گزارش را روشن کنید.",
+      ].join("\n"),
+    disabled:
+      [
+        `${pe("bell")} <b>ربات گزارش غیرفعال شد</b>`,
+        "",
+        `${pe("alert")} دیگر گزارشی ارسال نمی‌شود.`,
+        "هر زمان خواستید از مینی‌اپ تومانیت دوباره فعالش کنید.",
+      ].join("\n"),
     noShop:
-      "⚠️ برای این حساب تلگرام فروشگاهی ثبت نشده است.\nابتدا از داخل مینی‌اپ تومنیت فروشگاه خود را بسازید.",
-    statusOn: (shop: string) => `✅ گزارش تراکنش‌های <b>${shop}</b> فعال است.`,
-    statusOff: (shop: string) => `⏸ گزارش تراکنش‌های <b>${shop}</b> غیرفعال است.`,
+      [
+        `${pe("alert")} برای این حساب تلگرام فروشگاهی ثبت نشده است.`,
+        "ابتدا از مینی‌اپ تومانیت فروشگاه خود را بسازید.",
+      ].join("\n"),
+    statusOn: (shop: string) =>
+      `${pe("check")} گزارش تراکنش‌های <b>${shop}</b> فعال است.`,
+    statusOff: (shop: string) =>
+      [
+        `${pe("bell")} گزارش تراکنش‌های <b>${shop}</b> غیرفعال است.`,
+        "از مینی‌اپ تومانیت فعالش کنید.",
+      ].join("\n"),
     help:
-      "دستورات:\n/start — فعال‌سازی گزارش\n/stop — توقف گزارش\n/status — وضعیت",
-    btnOff: "غیرفعال‌سازی گزارش",
-    btnOn: "فعال‌سازی گزارش",
-    btnApp: "باز کردن تومنیت",
+      "دستورات:\n/start — اتصال به ربات\n/stop — توقف گزارش\n/status — وضعیت",
+    btnOff: "غیرفعالسازی در مینی‌اپ تومانیت",
+    btnOn: "فعالسازی در مینی‌اپ تومانیت",
+    btnApp: "ورود به مینی‌اپ تومانیت",
     privateOnly: "این ربات فقط در چت خصوصی کار می‌کند.",
-    // transaction
-    txTitle: "✅ <b>تراکنش موفق</b>",
-    shop: "🏪 فروشگاه",
-    invoiceAmount: "💰 مبلغ فاکتور",
-    fee: "🧾 کارمزد",
-    paidTotal: "💳 پرداختی خریدار",
-    credited: "🏦 واریز به موجودی",
-    balance: "💼 موجودی فعلی",
-    title: "📄 عنوان",
-    invoiceCode: "🔢 شماره فاکتور",
-    orderId: "🏷 شناسه سفارش",
-    source: "🌐 منبع",
-    sourceManual: "دستی",
-    sourceApi: "وب‌سرویس",
-    payer: "👤 پرداخت‌کننده",
-    payerId: "🆔 آیدی تلگرام",
-    phone: "📱 موبایل",
-    card: "💳 کارت",
-    cardOwner: "🪪 صاحب کارت",
-    trackId: "🔎 کد پیگیری",
-    txId: "🧷 شناسه تراکنش",
-    paidAt: "🕒 زمان پرداخت",
+    // transaction report lines
+    txOk: "تراکنش موفق",
+    invoiceAmount: "مبلغ فاکتور",
+    fee: "کارمزد",
+    credited: "مبلغ دریافتی",
+    payerId: "شناسه پرداخت‌کننده",
+    username: "یوزرنیم",
+    card: "شماره کارت",
+    bank: "بانک",
+    cardOwner: "صاحب کارت",
+    paidAt: "زمان پرداخت",
     feeBearer: {
-      payer: "پرداخت‌کننده",
-      merchant: "فروشنده",
-      split: "تقسیم",
+      payer: "کسر از پرداخت‌کننده",
+      merchant: "کسر از فروشگاه",
+      split: "تقسیم کارمزد",
     } as Record<string, string>,
-    payerSection: "<b>اطلاعات پرداخت‌کننده</b>",
-    invoiceSection: "<b>اطلاعات فاکتور</b>",
-    amountSection: "<b>مبالغ</b>",
   },
   en: {
-    linkedTitle: "🤖 <b>Report bot activated</b>",
-    linkedBody: (shop: string) =>
-      `From now on every successful transaction of <b>${shop}</b> will be sent here with full details.`,
-    disabledTitle: "⏸ <b>Report bot disabled</b>",
-    disabledBody: "Transaction reports are paused. You can enable them again anytime.",
+    welcomeOn: (shop: string) =>
+      [
+        `${pe("check")} <b>Report bot is ready</b>`,
+        "",
+        `${pe("bell")} Reports for <b>${shop}</b> are enabled.`,
+        "Every successful payment will be sent here with full details.",
+      ].join("\n"),
+    welcomeOff: (shop: string) =>
+      [
+        `${pe("bell")} <b>Report bot is inactive</b>`,
+        "",
+        `${pe("alert")} Your chat is linked to <b>${shop}</b>, but reports are still off.`,
+        "Open the Tomanit mini app and turn on the report bot switch.",
+      ].join("\n"),
+    disabled:
+      [
+        `${pe("bell")} <b>Report bot disabled</b>`,
+        "",
+        `${pe("alert")} Reports are paused.`,
+        "You can enable them again anytime from the Tomanit mini app.",
+      ].join("\n"),
     noShop:
-      "⚠️ No shop is registered for this Telegram account.\nCreate your shop in the Tomanit mini app first.",
-    statusOn: (shop: string) => `✅ Reports for <b>${shop}</b> are enabled.`,
-    statusOff: (shop: string) => `⏸ Reports for <b>${shop}</b> are disabled.`,
-    help: "Commands:\n/start — enable reports\n/stop — pause reports\n/status — status",
-    btnOff: "Disable reports",
-    btnOn: "Enable reports",
-    btnApp: "Open Tomanit",
+      [
+        `${pe("alert")} No shop is registered for this Telegram account.`,
+        "Create your shop in the Tomanit mini app first.",
+      ].join("\n"),
+    statusOn: (shop: string) =>
+      `${pe("check")} Reports for <b>${shop}</b> are enabled.`,
+    statusOff: (shop: string) =>
+      [
+        `${pe("bell")} Reports for <b>${shop}</b> are disabled.`,
+        "Enable them in the Tomanit mini app.",
+      ].join("\n"),
+    help: "Commands:\n/start — link bot\n/stop — pause reports\n/status — status",
+    btnOff: "Disable in Tomanit mini app",
+    btnOn: "Enable in Tomanit mini app",
+    btnApp: "Open Tomanit mini app",
     privateOnly: "This bot only works in private chats.",
-    txTitle: "✅ <b>Successful payment</b>",
-    shop: "🏪 Shop",
-    invoiceAmount: "💰 Invoice amount",
-    fee: "🧾 Fee",
-    paidTotal: "💳 Paid by customer",
-    credited: "🏦 Credited to balance",
-    balance: "💼 Current balance",
-    title: "📄 Title",
-    invoiceCode: "🔢 Invoice #",
-    orderId: "🏷 Order ID",
-    source: "🌐 Source",
-    sourceManual: "Manual",
-    sourceApi: "Web service",
-    payer: "👤 Payer",
-    payerId: "🆔 Telegram ID",
-    phone: "📱 Phone",
-    card: "💳 Card",
-    cardOwner: "🪪 Card owner",
-    trackId: "🔎 Track ID",
-    txId: "🧷 Transaction ID",
-    paidAt: "🕒 Paid at",
+    txOk: "Successful payment",
+    invoiceAmount: "Invoice amount",
+    fee: "Fee",
+    credited: "Received amount",
+    payerId: "Payer ID",
+    username: "Username",
+    card: "Card number",
+    bank: "Bank",
+    cardOwner: "Card holder",
+    paidAt: "Paid at",
     feeBearer: {
-      payer: "payer",
-      merchant: "merchant",
-      split: "split",
+      payer: "charged to payer",
+      merchant: "deducted from shop",
+      split: "split fee",
     } as Record<string, string>,
-    payerSection: "<b>Payer</b>",
-    invoiceSection: "<b>Invoice</b>",
-    amountSection: "<b>Amounts</b>",
   },
 } as const;
 
-function mainAppUrl(): string {
+/**
+ * Open Mini App via the MAIN bot deep link (t.me/…).
+ * web_app from the report bot signs initData with the report-bot token → 401 on API.
+ */
+function mainMiniAppDeepLink(startapp?: string): string {
   const username = getBotUsername();
-  if (username) {
-    const short = env.TELEGRAM_MINI_APP_SHORT_NAME?.trim();
-    return short
-      ? `https://t.me/${username}/${encodeURIComponent(short)}?startapp=shop`
-      : `https://t.me/${username}?startapp=shop`;
+  if (!username) {
+    return env.MINI_APP_URL.replace(/\/+$/, "");
   }
-  return env.MINI_APP_URL;
+  const short = env.TELEGRAM_MINI_APP_SHORT_NAME?.trim();
+  const path = short
+    ? `https://t.me/${username}/${encodeURIComponent(short)}`
+    : `https://t.me/${username}`;
+  return startapp
+    ? `${path}?startapp=${encodeURIComponent(startapp)}`
+    : path;
+}
+
+function miniAppUrlButton(text: string, iconId: string, startapp?: string) {
+  return {
+    text,
+    url: mainMiniAppDeepLink(startapp),
+    style: "primary" as const,
+    icon_custom_emoji_id: iconId,
+  };
 }
 
 function toggleKeyboard(locale: Locale, enabled: boolean) {
@@ -239,11 +289,18 @@ function toggleKeyboard(locale: Locale, enabled: boolean) {
     inline_keyboard: [
       [
         enabled
-          ? { text: t.btnOff, callback_data: "rb:off" }
-          : { text: t.btnOn, callback_data: "rb:on" },
+          ? miniAppUrlButton(t.btnOff, E.warn.id, "reportbot")
+          : miniAppUrlButton(t.btnOn, E.monitor.id, "reportbot"),
       ],
-      [{ text: t.btnApp, url: mainAppUrl() }],
     ],
+  };
+}
+
+function appOnlyKeyboard(locale: Locale) {
+  const t = TEXT[locale];
+  // Main bot Mini App home (wallet) — auth via main bot initData
+  return {
+    inline_keyboard: [[miniAppUrlButton(t.btnApp, E.monitor.id)]],
   };
 }
 
@@ -278,6 +335,29 @@ async function sendText(
     link_preview_options: { is_disabled: true },
     ...(replyMarkup ? { reply_markup: replyMarkup } : {}),
   });
+}
+
+/** Link chat for delivery — does NOT turn reports on (enable only from mini app). */
+async function linkChat(
+  telegramId: number,
+  chatId: number,
+): Promise<{ locale: Locale; shopName: string; enabled: boolean } | null> {
+  const owner = await findOwnerShop(telegramId);
+  const shop = owner?.merchantShop;
+  if (!owner || !shop) return null;
+  await prisma.merchantShop.update({
+    where: { id: shop.id },
+    data: {
+      reportBotChatId: String(chatId),
+      reportBotLinkedAt: new Date(),
+    },
+  });
+  log.event("report-bot", `linked shop:${shop.id} tg:${telegramId}`);
+  return {
+    locale: resolveLocale(owner.languageCode),
+    shopName: shop.name,
+    enabled: shop.reportBotEnabled,
+  };
 }
 
 async function setEnabled(
@@ -326,21 +406,21 @@ async function handleMessage(message: TgMessage): Promise<void> {
   const t = TEXT[locale];
 
   if (!owner?.merchantShop) {
-    await sendText(message.chat.id, t.noShop, {
-      inline_keyboard: [[{ text: t.btnApp, url: mainAppUrl() }]],
-    });
+    await sendText(message.chat.id, t.noShop, appOnlyKeyboard(locale));
     return;
   }
 
-  const shopName = escapeHtml(owner.merchantShop.name);
-
   if (cmd === "/start") {
-    await setEnabled(from.id, message.chat.id, true);
-    await sendText(
-      message.chat.id,
-      `${t.linkedTitle}\n\n${t.linkedBody(shopName)}`,
-      toggleKeyboard(locale, true),
-    );
+    const linked = await linkChat(from.id, message.chat.id);
+    if (!linked) {
+      await sendText(message.chat.id, t.noShop, appOnlyKeyboard(locale));
+      return;
+    }
+    const shopName = escapeHtml(linked.shopName);
+    const text = linked.enabled
+      ? t.welcomeOn(shopName)
+      : t.welcomeOff(shopName);
+    await sendText(message.chat.id, text, toggleKeyboard(locale, linked.enabled));
     return;
   }
 
@@ -348,12 +428,13 @@ async function handleMessage(message: TgMessage): Promise<void> {
     await setEnabled(from.id, message.chat.id, false);
     await sendText(
       message.chat.id,
-      `${t.disabledTitle}\n\n${t.disabledBody}`,
+      t.disabled,
       toggleKeyboard(locale, false),
     );
     return;
   }
 
+  const shopName = escapeHtml(owner.merchantShop.name);
   const enabled =
     owner.merchantShop.reportBotEnabled &&
     owner.merchantShop.reportBotChatId === String(message.chat.id);
@@ -374,42 +455,35 @@ async function handleCallback(
   cb: NonNullable<ReportBotUpdate["callback_query"]>,
 ): Promise<void> {
   const data = cb.data || "";
-  const chatId = cb.message?.chat.id ?? cb.from.id;
-  if (data !== "rb:on" && data !== "rb:off") {
-    await callReportApi("answerCallbackQuery", { callback_query_id: cb.id });
+  // Enable/disable UI is web_app only; legacy callbacks just nudge to the mini app.
+  if (data === "rb:on" || data === "rb:off") {
+    const owner = await findOwnerShop(cb.from.id);
+    const locale = resolveLocale(owner?.languageCode);
+    await callReportApi("answerCallbackQuery", {
+      callback_query_id: cb.id,
+      text:
+        locale === "fa"
+          ? "از دکمه مینی‌اپ تومانیت استفاده کنید."
+          : "Use the Tomanit mini app button.",
+      show_alert: true,
+    });
     return;
   }
-
-  const enable = data === "rb:on";
-  const result = await setEnabled(cb.from.id, chatId, enable);
   await callReportApi("answerCallbackQuery", { callback_query_id: cb.id });
-  if (!result) return;
-
-  const t = TEXT[result.locale];
-  const shopName = escapeHtml(result.shopName);
-  const text = enable
-    ? `${t.linkedTitle}\n\n${t.linkedBody(shopName)}`
-    : `${t.disabledTitle}\n\n${t.disabledBody}`;
-
-  if (cb.message?.message_id) {
-    try {
-      await callReportApi("editMessageText", {
-        chat_id: chatId,
-        message_id: cb.message.message_id,
-        text,
-        parse_mode: "HTML",
-        link_preview_options: { is_disabled: true },
-        reply_markup: toggleKeyboard(result.locale, enable),
-      });
-      return;
-    } catch {
-      // fall through to a fresh message
-    }
-  }
-  await sendText(chatId, text, toggleKeyboard(result.locale, enable));
 }
 
 async function handleUpdate(update: ReportBotUpdate): Promise<void> {
+  const fromId =
+    update.message?.from?.id ?? update.callback_query?.from?.id ?? null;
+  const preview =
+    update.message?.text ||
+    update.callback_query?.data ||
+    (update.message ? "message" : "update");
+  log.event(
+    "report-bot",
+    `update #${update.update_id} tg:${fromId ?? "?"} · ${String(preview).slice(0, 80)}`,
+  );
+
   if (update.message) {
     await handleMessage(update.message);
     return;
@@ -449,7 +523,7 @@ export function startShopReportBot(): void {
     try {
       await callReportApi("setMyCommands", {
         commands: [
-          { command: "start", description: "فعال‌سازی گزارش تراکنش‌ها" },
+          { command: "start", description: "اتصال به ربات گزارش" },
           { command: "stop", description: "توقف گزارش" },
           { command: "status", description: "وضعیت گزارش" },
         ],
@@ -496,6 +570,7 @@ export function startShopReportBot(): void {
 export async function notifyShopReportTransaction(chargeId: number): Promise<void> {
   if (!isShopReportBotConfigured()) return;
   try {
+    await resolveBotUsername();
     const charge = await prisma.gatewayCharge.findUnique({
       where: { id: chargeId },
       include: {
@@ -517,7 +592,6 @@ export async function notifyShopReportTransaction(chargeId: number): Promise<voi
                 id: true,
                 name: true,
                 feeBearer: true,
-                balanceToman: true,
                 reportBotEnabled: true,
                 reportBotChatId: true,
                 user: { select: { languageCode: true } },
@@ -542,63 +616,69 @@ export async function notifyShopReportTransaction(chargeId: number): Promise<voi
     const credited = Math.max(0, fee > 0 ? paidTotal - fee : invoiceAmount);
     const bearer = t.feeBearer[shop.feeBearer] ?? shop.feeBearer;
 
-    const payerName = [charge.user?.firstName, charge.user?.lastName]
-      .filter(Boolean)
-      .join(" ")
-      .trim();
     const payerUsername = charge.user?.username?.trim();
-    const payerLabel =
-      [payerName, payerUsername ? `@${payerUsername}` : ""]
-        .filter(Boolean)
-        .join(" · ") || "—";
     const payerTelegramId = link.payerTelegramId || charge.user?.telegramId || null;
     const card = formatCard(charge.bankCard?.cardNumber);
-    const cardLine = card
-      ? `<code>${card}</code>${
-          charge.bankCard?.bankName
-            ? ` · ${escapeHtml(charge.bankCard.bankName)}`
-            : ""
-        }`
-      : null;
+    const refId = charge.trackId?.trim() || charge.code;
+    const sep = " : ";
 
-    const row = (label: string, value: string | null | undefined) =>
-      value ? `${label}: ${value}` : null;
+    const line = (emoji: keyof typeof E, text: string) =>
+      `${pe(emoji)} ${text}`;
 
     const lines = [
-      `${t.txTitle} · <b>${escapeHtml(shop.name)}</b>`,
+      line("check", `<b>${t.txOk}</b>  |  <b>${escapeHtml(shop.name)}</b>`),
       "",
-      t.amountSection,
-      row(t.invoiceAmount, `<b>${formatToman(invoiceAmount, locale)}</b>`),
-      row(t.fee, `${formatToman(fee, locale)} (${escapeHtml(bearer)})`),
-      row(t.paidTotal, formatToman(paidTotal, locale)),
-      row(t.credited, `<b>${formatToman(credited, locale)}</b>`),
-      row(t.balance, formatToman(Number(shop.balanceToman), locale)),
-      "",
-      t.invoiceSection,
-      row(t.title, escapeHtml(link.title)),
-      row(t.invoiceCode, `<code>${escapeHtml(link.code)}</code>`),
-      row(t.orderId, link.orderId ? `<code>${escapeHtml(link.orderId)}</code>` : null),
-      row(t.source, link.source === "api" ? t.sourceApi : t.sourceManual),
-      "",
-      t.payerSection,
-      row(t.payer, escapeHtml(payerLabel)),
-      row(t.payerId, payerTelegramId ? `<code>${escapeHtml(payerTelegramId)}</code>` : null),
-      row(t.phone, link.payerPhone ? `<code>${escapeHtml(link.payerPhone)}</code>` : null),
-      row(t.card, cardLine),
-      row(
-        t.cardOwner,
-        charge.bankCard?.ownerName ? escapeHtml(charge.bankCard.ownerName) : null,
+      line(
+        "info",
+        `${mono(escapeHtml(refId))}  |  ${mono(escapeHtml(charge.code))}`,
       ),
       "",
-      row(t.trackId, charge.trackId ? `<code>${escapeHtml(charge.trackId)}</code>` : null),
-      row(t.txId, `<code>${escapeHtml(charge.code)}</code>`),
-      row(t.paidAt, formatDateTime(charge.paidAt ?? new Date(), locale)),
-    ].filter((line): line is string => line !== null);
+      line("cash", `${t.invoiceAmount}${sep}${formatToman(invoiceAmount, locale)}`),
+      line(
+        "bag",
+        `${t.fee}${sep}${formatToman(fee, locale)}  |  <b>${escapeHtml(bearer)}</b>`,
+      ),
+      line(
+        "money",
+        `<b>${t.credited}</b>${sep}${formatToman(credited, locale)}`,
+      ),
+      "",
+      payerTelegramId
+        ? line(
+            "hush",
+            `${t.payerId}${sep}${mono(escapeHtml(payerTelegramId))}`,
+          )
+        : null,
+      payerUsername
+        ? line(
+            "user",
+            `${t.username}${sep}<b>@${escapeHtml(payerUsername)}</b>`,
+          )
+        : null,
+      card ? line("card", `${t.card}${sep}${mono(card)}`) : null,
+      charge.bankCard?.bankName
+        ? line(
+            "bank",
+            `${t.bank}${sep}<b>${escapeHtml(charge.bankCard.bankName)}</b>`,
+          )
+        : null,
+      charge.bankCard?.ownerName
+        ? line(
+            "owner",
+            `${t.cardOwner}${sep}${escapeHtml(charge.bankCard.ownerName)}`,
+          )
+        : null,
+      "",
+      line(
+        "clock",
+        `${t.paidAt}${sep}${mono(
+          formatDateTime(charge.paidAt ?? new Date(), locale),
+        )}`,
+      ),
+    ].filter((row): row is string => row !== null);
 
     try {
-      await sendText(shop.reportBotChatId, lines.join("\n"), {
-        inline_keyboard: [[{ text: t.btnApp, url: mainAppUrl() }]],
-      });
+      await sendText(shop.reportBotChatId, lines.join("\n"), appOnlyKeyboard(locale));
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       // Owner blocked the bot or deleted the chat — stop sending.

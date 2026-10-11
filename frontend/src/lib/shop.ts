@@ -374,6 +374,14 @@ export function createMerchantPayCharge(payload: {
   });
 }
 
+/** Notify backend that payer opened an invoice — triggers main-bot /start message. */
+export function notifyMerchantPayOpened(): Promise<{ ok: true }> {
+  return apiFetch("/merchant-pay/opened", {
+    method: "POST",
+    body: {},
+  });
+}
+
 /** Public result lookup (charge code or pay token) — no payer ownership required. */
 export function fetchMerchantPayCharge(
   code: string,

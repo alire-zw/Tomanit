@@ -422,21 +422,32 @@
   gap: 2px;
   min-width: 0;
   flex: 1;
+  overflow: hidden;
+  text-align: start;
+  unicode-bidi: isolate;
 }
 
 .my-shop__menu-label {
+  display: block;
+  width: 100%;
+  max-width: 100%;
   font-size: 13px;
   font-weight: 600;
   color: var(--text);
+  text-align: start;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .my-shop__menu-hint {
+  display: block;
+  width: 100%;
+  max-width: 100%;
   font-size: 11px;
   font-weight: 400;
   color: var(--text-muted);
+  text-align: start;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -2620,92 +2631,82 @@
   gap: 10px;
 }
 
-.shop-rbot__hero {
+.shop-rbot__bar {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 6px;
-  padding: 18px 14px 16px;
-  border-radius: 16px;
+  gap: 10px;
+  min-height: 56px;
+  padding: 10px 12px;
+  border-radius: 14px;
   border: 1px solid var(--border-subtle);
-  background:
-    radial-gradient(
-      120% 90% at 50% 0%,
-      color-mix(in srgb, var(--accent) 14%, transparent) 0%,
-      transparent 70%
-    ),
-    var(--surface);
-  text-align: center;
+  background: var(--surface);
   box-sizing: border-box;
 }
 
-.shop-rbot__hero-icon {
+.shop-rbot__icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 58px;
-  height: 58px;
-  margin-bottom: 4px;
-  border-radius: 18px;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
   color: var(--text-muted);
-  background: color-mix(in srgb, var(--text-muted) 12%, transparent);
-  transition: color 0.2s ease, background 0.2s ease;
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
 }
 
-.shop-rbot__hero-icon--on {
+.shop-rbot__icon--on {
   color: var(--accent);
   background: color-mix(in srgb, var(--accent) 16%, transparent);
-  box-shadow: 0 0 0 6px color-mix(in srgb, var(--accent) 7%, transparent);
 }
 
-.shop-rbot__hero-title {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 800;
-  color: var(--text);
-}
-
-.shop-rbot__hero-desc {
-  margin: 0;
-  max-width: 320px;
-  font-size: 12px;
-  line-height: 1.7;
-  color: var(--text-muted);
+.shop-rbot__bar-status {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
 }
 
 .shop-rbot__status {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  margin-top: 6px;
-  padding: 5px 10px;
-  border-radius: 999px;
-  font-size: 11.5px;
-  font-weight: 700;
+  gap: 5px;
+  max-width: 100%;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
   color: var(--text-muted);
-  background: color-mix(in srgb, var(--text-muted) 12%, transparent);
+  background: color-mix(in srgb, var(--text-muted) 10%, transparent);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .shop-rbot__status-dot {
-  width: 7px;
-  height: 7px;
+  width: 5px;
+  height: 5px;
+  flex-shrink: 0;
   border-radius: 50%;
   background: currentColor;
 }
 
 .shop-rbot__status--on {
-  color: #16a34a;
-  background: color-mix(in srgb, #16a34a 14%, transparent);
+  color: #0b6b3a;
+  background: color-mix(in srgb, #16a34a 12%, transparent);
 }
 
 .shop-rbot__status--on .shop-rbot__status-dot {
-  box-shadow: 0 0 0 3px color-mix(in srgb, #16a34a 25%, transparent);
   animation: shop-rbot-pulse 1.8s ease-in-out infinite;
 }
 
 .shop-rbot__status--paused {
-  color: #d97706;
-  background: color-mix(in srgb, #d97706 14%, transparent);
+  color: #9a6700;
+  background: color-mix(in srgb, #eab308 14%, transparent);
 }
 
 @keyframes shop-rbot-pulse {
@@ -2719,10 +2720,84 @@
 }
 
 .shop-rbot__handle {
-  font-size: 11.5px;
+  font-size: 10.5px;
   font-weight: 600;
   color: var(--text-muted);
   unicode-bidi: isolate;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.shop-rbot__switch {
+  position: relative;
+  flex-shrink: 0;
+  width: 44px;
+  height: 26px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text-muted) 28%, transparent);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.2s ease;
+}
+
+.shop-rbot__switch.is-on {
+  background: var(--accent);
+}
+
+.shop-rbot__switch:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.shop-rbot__switch-thumb {
+  position: absolute;
+  top: 3px;
+  inset-inline-start: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+  transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.shop-rbot__switch.is-on .shop-rbot__switch-thumb {
+  transform: translateX(18px);
+}
+
+html[dir="rtl"] .shop-rbot__switch.is-on .shop-rbot__switch-thumb {
+  transform: translateX(-18px);
+}
+
+.shop-rbot__open {
+  flex-shrink: 0;
+  margin: 0;
+  padding: 8px 11px;
+  border: none;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--accent);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 0.15s ease, background 0.15s ease;
+}
+
+.shop-rbot__open:active {
+  opacity: 0.8;
+}
+
+.shop-rbot__open:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .shop-rbot__only-success {
@@ -2798,9 +2873,4 @@
   font-weight: 800;
 }
 
-.shop-rbot__actions {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
 
