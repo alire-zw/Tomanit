@@ -17,9 +17,6 @@ function clipFullName(name: string): string {
   return trimmed.length > 128 ? trimmed.slice(0, 128) : trimmed;
 }
 
-/** Invoice amounts at/under this skip KYC name-match when adding a card. */
-const RELAXED_CARD_VERIFY_MAX_TOMAN = 500_000;
-
 const addSchema = z.object({
   cardNumber: z.string().min(16).max(24),
   bankName: z.string().trim().min(1).max(128).optional(),
@@ -29,7 +26,7 @@ const addSchema = z.object({
     .trim()
     .regex(/^\d{6,8}$/)
     .optional(),
-  /** Merchant invoice amount — ≤500k skips name-match / KYC reference gate. */
+  /** Optional context from merchant invoice (logging only — does not relax name match). */
   invoiceAmountToman: z.coerce.number().int().positive().max(500_000_000).optional(),
 });
 
@@ -115,10 +112,6 @@ export async function cardRoutes(app: FastifyInstance): Promise<void> {
     }
 
     const user = request.user!;
-    const relaxedVerify =
-      typeof body.invoiceAmountToman === "number" &&
-      body.invoiceAmountToman > 0 &&
-      body.invoiceAmountToman <= RELAXED_CARD_VERIFY_MAX_TOMAN;
 
     const existingForUser = await prisma.bankCard.findFirst({
       where: {
@@ -156,17 +149,12 @@ export async function cardRoutes(app: FastifyInstance): Promise<void> {
       orderBy: [{ isPrimary: "desc" }, { createdAt: "desc" }],
       select: { ownerName: true },
     });
+    const isFirstCard = previousCards.length === 0;
+    // First card establishes the owner name; later cards must match it (or profile name).
     const referenceName =
       previousCards.find((card) => card.ownerName?.trim())?.ownerName?.trim() ||
       user.fullName?.trim() ||
       null;
-
-    if (!relaxedVerify && !referenceName) {
-      return reply.status(400).send({
-        error: "ابتدا احراز هویت را کامل کنید تا کارت مرجع ثبت شود",
-        code: "KYC_REFERENCE_REQUIRED",
-      });
-    }
 
     try {
       // Card → IBAN inquiry (شبا + نام صاحب کارت)
@@ -188,8 +176,8 @@ export async function cardRoutes(app: FastifyInstance): Promise<void> {
         });
       }
 
-      // Full KYC path: name must match reference. Relaxed (≤500k invoice): skip match.
-      if (!relaxedVerify && referenceName && !namesMatch(ownerName, referenceName)) {
+      // First card: any name OK. Next cards: must match previous owner / profile name.
+      if (!isFirstCard && referenceName && !namesMatch(ownerName, referenceName)) {
         return reply.status(400).send({
           error: "نام صاحب این کارت با کارت قبلی شما مطابقت ندارد",
           code: "OWNER_NAME_MISMATCH",
@@ -240,7 +228,11 @@ export async function cardRoutes(app: FastifyInstance): Promise<void> {
       log.event(
         "cards",
         `added user:${user.id} card:**${cardNumber.slice(-4)} via:card-to-iban${
-          relaxedVerify ? " relaxed:invoice<=500k" : ""
+          isFirstCard ? " first" : " matched"
+        }${
+          typeof body.invoiceAmountToman === "number"
+            ? ` invoice:${body.invoiceAmountToman}`
+            : ""
         } name:${nextFullName}`,
       );
 

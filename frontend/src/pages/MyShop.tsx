@@ -17,6 +17,7 @@ import { useAuth } from "../hooks/useAuth";
 import { useTelegram } from "../hooks/useTelegram";
 import { sessionDataChanged } from "../lib/api";
 import { formatFaNumber } from "../lib/format";
+import { prefetchRoute, prefetchShopSections } from "../lib/routePrefetch";
 import {
   fetchShopHub,
   shopIsActive,
@@ -238,15 +239,37 @@ export function MyShopPage() {
   const todayVolume = hub?.stats.todayVolumeToman ?? 0;
   const rise = (n: number) => (showStatusBar ? n + 1 : n);
 
+  useEffect(() => {
+    if (!interactive) return;
+    const warm = () => prefetchShopSections();
+    const ric = (
+      window as Window & {
+        requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+      }
+    ).requestIdleCallback;
+    if (typeof ric === "function") {
+      const id = ric(warm, { timeout: 600 });
+      return () => {
+        (
+          window as Window & { cancelIdleCallback?: (id: number) => void }
+        ).cancelIdleCallback?.(id);
+      };
+    }
+    const timer = window.setTimeout(warm, 120);
+    return () => window.clearTimeout(timer);
+  }, [interactive]);
+
   const goRegister = () => {
     if (shop?.status === "pending" || shop?.status === "suspended") return;
     haptic("light");
+    prefetchRoute("/shop/stores/new");
     navigate("/shop/stores/new");
   };
 
   const onNav = (path: string) => {
     if (!interactive) return;
     haptic("light");
+    prefetchRoute(path);
     navigate(path);
   };
 
@@ -349,6 +372,9 @@ export function MyShopPage() {
                     type="button"
                     className="my-shop__menu-item"
                     disabled={!interactive}
+                    onPointerEnter={() => prefetchRoute(tile.path)}
+                    onPointerDown={() => prefetchRoute(tile.path)}
+                    onTouchStart={() => prefetchRoute(tile.path)}
                     onClick={() => onNav(tile.path)}
                   >
                     <span className="my-shop__menu-icon" aria-hidden>

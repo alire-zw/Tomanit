@@ -6,8 +6,13 @@ import { PageBoot } from "./components/PageBoot";
 import "./components/PageBoot.css";
 import { RequireAdmin, RequireFullAdmin } from "./components/RequireAdmin";
 import { AuthProvider } from "./hooks/useAuth";
+/** Hot bottom-nav tabs — eager so switches never wait on a chunk. */
+import { WalletPage } from "./pages/Wallet";
+import { MyShopPage } from "./pages/MyShop";
+import { ProfilePage } from "./pages/Profile";
+import { SupportListPage } from "./pages/support/SupportList";
 
-/** Route-level code splitting — keeps the first paint under a small shell. */
+/** Route-level code splitting for secondary screens. */
 function lazyNamed<TModule, TKey extends keyof TModule>(
   loader: () => Promise<TModule>,
   exportName: TKey,
@@ -18,8 +23,6 @@ function lazyNamed<TModule, TKey extends keyof TModule>(
   });
 }
 
-const WalletPage = lazyNamed(() => import("./pages/Wallet"), "WalletPage");
-const ProfilePage = lazyNamed(() => import("./pages/Profile"), "ProfilePage");
 const ProfileInfoPage = lazyNamed(() => import("./pages/profile/ProfileInfo"), "ProfileInfoPage");
 const ProfileVerifyPage = lazyNamed(() => import("./pages/profile/ProfileVerify"), "ProfileVerifyPage");
 const ProfileVerifyLevelsPage = lazyNamed(
@@ -154,7 +157,6 @@ const WalletWithdrawSuccessPage = lazyNamed(
   () => import("./pages/wallet/WalletWithdrawSuccessPage"),
   "WalletWithdrawSuccessPage",
 );
-const MyShopPage = lazyNamed(() => import("./pages/MyShop"), "MyShopPage");
 const ShopStoresPage = lazyNamed(() => import("./pages/shop/ShopStoresPage"), "ShopStoresPage");
 const ShopStoreNewPage = lazyNamed(
   () => import("./pages/shop/ShopStoreNewPage"),
@@ -205,6 +207,7 @@ const MerchantApiDocsPage = lazyNamed(
 const NotificationsPage = lazyNamed(() => import("./pages/Notifications"), "NotificationsPage");
 
 function LazyRoute({ children }: { children: ReactNode }) {
+  // Local boundary only — never wrap the whole router (that blanks BottomNav).
   return <Suspense fallback={<PageBoot />}>{children}</Suspense>;
 }
 
@@ -213,8 +216,7 @@ export default function App() {
     <AuthProvider>
       <NotificationProvider>
         <BrowserRouter>
-          <Suspense fallback={<PageBoot />}>
-            <Routes>
+          <Routes>
               <Route element={<AppLayout />}>
                 <Route path="/" element={<WalletPage />} />
                 <Route path="/shop" element={<MyShopPage />} />
@@ -272,17 +274,87 @@ export default function App() {
                 <Route path="/wallet/:assetId" element={<WalletAssetPage />} />
                 <Route path="/notifications" element={<NotificationsPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
-                <Route path="/profile/info" element={<ProfileInfoPage />} />
-                <Route path="/profile/verify" element={<ProfileVerifyLevelsPage />} />
-                <Route path="/profile/verify/terms" element={<ProfileVerifyPage />} />
-                <Route path="/profile/verify/identity" element={<ProfileVerifyIdentityPage />} />
-                <Route path="/profile/verify/card" element={<ProfileVerifyCardPage />} />
-                <Route path="/profile/verify/review" element={<ProfileVerifyReviewPage />} />
-                <Route path="/profile/bankcard" element={<ProfileBankcardPage />} />
-                <Route path="/profile/settings" element={<ProfileSettingsPage />} />
+                <Route
+                  path="/profile/info"
+                  element={
+                    <LazyRoute>
+                      <ProfileInfoPage />
+                    </LazyRoute>
+                  }
+                />
+                <Route
+                  path="/profile/verify"
+                  element={
+                    <LazyRoute>
+                      <ProfileVerifyLevelsPage />
+                    </LazyRoute>
+                  }
+                />
+                <Route
+                  path="/profile/verify/terms"
+                  element={
+                    <LazyRoute>
+                      <ProfileVerifyPage />
+                    </LazyRoute>
+                  }
+                />
+                <Route
+                  path="/profile/verify/identity"
+                  element={
+                    <LazyRoute>
+                      <ProfileVerifyIdentityPage />
+                    </LazyRoute>
+                  }
+                />
+                <Route
+                  path="/profile/verify/card"
+                  element={
+                    <LazyRoute>
+                      <ProfileVerifyCardPage />
+                    </LazyRoute>
+                  }
+                />
+                <Route
+                  path="/profile/verify/review"
+                  element={
+                    <LazyRoute>
+                      <ProfileVerifyReviewPage />
+                    </LazyRoute>
+                  }
+                />
+                <Route
+                  path="/profile/bankcard"
+                  element={
+                    <LazyRoute>
+                      <ProfileBankcardPage />
+                    </LazyRoute>
+                  }
+                />
+                <Route
+                  path="/profile/settings"
+                  element={
+                    <LazyRoute>
+                      <ProfileSettingsPage />
+                    </LazyRoute>
+                  }
+                />
                 <Route path="/support" element={<SupportListPage />} />
-                <Route path="/support/new" element={<SupportNewPage />} />
-                <Route path="/support/:id" element={<SupportDetailPage />} />
+                <Route
+                  path="/support/new"
+                  element={
+                    <LazyRoute>
+                      <SupportNewPage />
+                    </LazyRoute>
+                  }
+                />
+                <Route
+                  path="/support/:id"
+                  element={
+                    <LazyRoute>
+                      <SupportDetailPage />
+                    </LazyRoute>
+                  }
+                />
                 <Route
                   path="/admin"
                   element={
@@ -436,7 +508,6 @@ export default function App() {
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Route>
             </Routes>
-          </Suspense>
         </BrowserRouter>
       </NotificationProvider>
     </AuthProvider>

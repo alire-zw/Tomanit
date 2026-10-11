@@ -19,6 +19,7 @@ import { useI18n } from "../../context/I18nContext";
 import { useAuth } from "../../hooks/useAuth";
 import { apiFetch } from "../../lib/api";
 import { formatFaNumber } from "../../lib/format";
+import { prefetchAdminSections, prefetchRoute } from "../../lib/routePrefetch";
 import "../../styles/shop-rise.css";
 import "./Admin.css";
 
@@ -90,6 +91,9 @@ function HubMenu({
                 key={tile.id}
                 type="button"
                 className="admin-hub__menu-item"
+                onPointerEnter={() => prefetchRoute(tile.path)}
+                onPointerDown={() => prefetchRoute(tile.path)}
+                onTouchStart={() => prefetchRoute(tile.path)}
                 onClick={() => onOpen(tile.path)}
               >
                 <span className="admin-hub__menu-icon" aria-hidden>
@@ -137,6 +141,26 @@ export function AdminHubPage() {
     if (!loading && isAdmin) void loadOverview();
   }, [isAdmin, loading, loadOverview]);
 
+  useEffect(() => {
+    if (loading || !isAdmin) return;
+    const warm = () => prefetchAdminSections();
+    const ric = (
+      window as Window & {
+        requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+      }
+    ).requestIdleCallback;
+    if (typeof ric === "function") {
+      const id = ric(warm, { timeout: 600 });
+      return () => {
+        (
+          window as Window & { cancelIdleCallback?: (id: number) => void }
+        ).cancelIdleCallback?.(id);
+      };
+    }
+    const timer = window.setTimeout(warm, 120);
+    return () => window.clearTimeout(timer);
+  }, [isAdmin, loading]);
+
   if (!loading && !isAdmin) {
     return (
       <div className="admin admin-page">
@@ -145,7 +169,10 @@ export function AdminHubPage() {
     );
   }
 
-  const open = (path: string) => navigate(path);
+  const open = (path: string) => {
+    prefetchRoute(path);
+    navigate(path);
+  };
   const o = overview;
 
   const usersHint = o

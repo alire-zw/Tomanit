@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { BottomNav } from "./BottomNav";
 import { ChannelLockGate } from "./ChannelLockGate";
 import { Header } from "./Header";
+import { PageBoot } from "./PageBoot";
 import { useTelegram } from "../hooks/useTelegram";
 import {
   isStartParamConsumed,
@@ -14,6 +15,7 @@ import { dismissBootSplash } from "../lib/bootSplash";
 import { prefetchMainTabs } from "../lib/routePrefetch";
 import { syncTelegramChromeForPath } from "../lib/telegramTheme";
 import "../App.css";
+import "./PageBoot.css";
 
 const noBottomNavPrefixes = [
   "/profile/",
@@ -153,7 +155,9 @@ export function AppLayout() {
           {pendingInvoiceDeepLink ? (
             <div className="app__pay-boot" aria-busy aria-label="…" />
           ) : (
-            <Outlet />
+            <Suspense fallback={<PageBoot />}>
+              <Outlet />
+            </Suspense>
           )}
         </main>
       </div>
