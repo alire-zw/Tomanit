@@ -937,6 +937,82 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
       },
     );
 
+    adminOnly.post<{ Params: { id: string } }>(
+      "/admin/users/:id/reset-kyc-cards",
+      async (request, reply) => {
+        const id = parseIdParam(request.params.id);
+        if (id == null) {
+          return reply.status(400).send({ error: "Invalid user id" });
+        }
+        const actor = request.user!;
+        if (actor.id === id) {
+          return reply.status(400).send({ error: "Cannot reset your own account" });
+        }
+
+        const existing = await prisma.user.findUnique({
+          where: { id },
+          include: {
+            bankCards: {
+              where: { revokedAt: null },
+              select: { id: true, cardNumber: true },
+            },
+          },
+        });
+        if (!existing) {
+          return reply.status(404).send({ error: "User not found" });
+        }
+
+        const now = new Date();
+        const cardIds = existing.bankCards.map((c) => c.id);
+        const updated = await prisma.$transaction(async (tx) => {
+          if (cardIds.length > 0) {
+            await tx.bankCard.updateMany({
+              where: { id: { in: cardIds } },
+              data: {
+                revokedAt: now,
+                isPrimary: false,
+                isVerified: false,
+                matchedAt: null,
+              },
+            });
+          }
+          return tx.user.update({
+            where: { id },
+            data: {
+              fullName: null,
+              nationalId: null,
+              birthDate: null,
+              shahkarMatchedAt: null,
+              kycVerifiedAt: null,
+              kycLevel: "none",
+            },
+          });
+        });
+
+        await invalidateMeCache(updated.telegramId);
+        await writeAdminAudit({
+          request,
+          actor,
+          action: "user.kyc_cards.reset",
+          targetType: "user",
+          targetId: updated.telegramId,
+          meta: {
+            targetUserTelegramId: updated.telegramId,
+            previousKycLevel: existing.kycLevel,
+            previousNationalId: existing.nationalId,
+            previousFullName: existing.fullName,
+            revokedCardIds: cardIds,
+            revokedCardCount: cardIds.length,
+          },
+        });
+
+        return {
+          user: serializeUser(updated),
+          revokedCardCount: cardIds.length,
+        };
+      },
+    );
+
     adminOnly.get("/admin/invoices", async () => {
       const invoices = await prisma.invoice.findMany({
         orderBy: { createdAt: "desc" },

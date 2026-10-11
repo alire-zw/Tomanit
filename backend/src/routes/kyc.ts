@@ -98,39 +98,46 @@ export async function kycRoutes(app: FastifyInstance): Promise<void> {
           });
 
           await tx.bankCard.updateMany({
-            where: { userId: user.id, isPrimary: true },
+            where: { userId: user.id, isPrimary: true, revokedAt: null },
             data: { isPrimary: false },
           });
 
-          await tx.bankCard.upsert({
-            where: {
-              userId_cardNumber: { userId: user.id, cardNumber },
-            },
-            create: {
-              userId: user.id,
-              cardNumber,
-              iban: ibanInfo.iban,
-              depositNumber: ibanInfo.depositNumber,
-              bankName,
-              bankSlug,
-              bankBin: cardNumber.slice(0, 6),
-              ownerName: ownerName,
-              isPrimary: true,
-              isVerified: true,
-              matchedAt: now,
-            },
-            update: {
-              iban: ibanInfo.iban,
-              depositNumber: ibanInfo.depositNumber,
-              bankName,
-              bankSlug,
-              bankBin: cardNumber.slice(0, 6),
-              ownerName: ownerName,
-              isPrimary: true,
-              isVerified: true,
-              matchedAt: now,
-            },
+          const existingCard = await tx.bankCard.findFirst({
+            where: { userId: user.id, cardNumber, revokedAt: null },
+            select: { id: true },
           });
+          if (existingCard) {
+            await tx.bankCard.update({
+              where: { id: existingCard.id },
+              data: {
+                iban: ibanInfo.iban,
+                depositNumber: ibanInfo.depositNumber,
+                bankName,
+                bankSlug,
+                bankBin: cardNumber.slice(0, 6),
+                ownerName: ownerName,
+                isPrimary: true,
+                isVerified: true,
+                matchedAt: now,
+              },
+            });
+          } else {
+            await tx.bankCard.create({
+              data: {
+                userId: user.id,
+                cardNumber,
+                iban: ibanInfo.iban,
+                depositNumber: ibanInfo.depositNumber,
+                bankName,
+                bankSlug,
+                bankBin: cardNumber.slice(0, 6),
+                ownerName: ownerName,
+                isPrimary: true,
+                isVerified: true,
+                matchedAt: now,
+              },
+            });
+          }
 
           const autoCloseAt = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
           const createdTicket = await tx.supportTicket.create({

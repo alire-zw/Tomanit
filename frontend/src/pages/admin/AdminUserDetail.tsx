@@ -138,7 +138,8 @@ type SheetKind =
   | { kind: "ban" }
   | { kind: "balance" }
   | { kind: "role"; role: UserRole }
-  | { kind: "fee"; feeLevel: FeeLevel };
+  | { kind: "fee"; feeLevel: FeeLevel }
+  | { kind: "resetKyc" };
 
 const ROLE_OPTIONS: UserRole[] = ["user", "admin", "supervisor"];
 
@@ -201,6 +202,10 @@ function auditActionLabel(
       return t("admin.auditFee", {
         from: feeLevelLabel(String(meta?.previousFeeLevel ?? "")),
         to: feeLevelLabel(String(meta?.newFeeLevel ?? "")),
+      });
+    case "user.kyc_cards.reset":
+      return t("admin.auditKycReset", {
+        cards: Number(meta?.revokedCardCount ?? 0),
       });
     default:
       return action;
@@ -527,6 +532,26 @@ export function AdminUserDetailPage() {
     }
   };
 
+  const executeResetKyc = async () => {
+    if (!user || !canEdit) return;
+    setSaving(true);
+    try {
+      const result = await apiFetch<{ user: UserDto; revokedCardCount: number }>(
+        `/admin/users/${user.id}/reset-kyc-cards`,
+        { method: "POST" },
+      );
+      setPayload((prev) => (prev ? { ...prev, user: result.user } : prev));
+      haptic("medium");
+      notify(t("admin.userDetailResetKycOk"), "success");
+      setSheet(null);
+      void load();
+    } catch (err) {
+      notify(err instanceof Error ? err.message : t("common.error"), "error");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const name = user ? displayName(user) : t("admin.userDetailTitle");
   const banNext = user ? !user.isBanned : false;
   const tomanBalance = Math.trunc(Number(wallet?.tomanBalance ?? 0));
@@ -648,6 +673,21 @@ export function AdminUserDetailPage() {
         ]}
       />
 
+      <BottomSheet
+        open={sheet?.kind === "resetKyc"}
+        onClose={closeSheet}
+        title={t("admin.userDetailResetKyc")}
+        description={t("admin.userDetailResetKycDesc", { name })}
+        buttons={[
+          {
+            label: saving ? t("common.loading") : t("admin.userDetailResetKycConfirm"),
+            variant: "danger",
+            disabled: saving,
+            onClick: () => void executeResetKyc(),
+          },
+        ]}
+      />
+
       {loading ? <DetailSkeleton /> : null}
 
       {!loading && error ? (
@@ -723,6 +763,17 @@ export function AdminUserDetailPage() {
                   }}
                 >
                   {t("admin.userDetailBalance")}
+                </button>
+                <button
+                  type="button"
+                  className="admin-user-detail__op admin-user-detail__op--danger"
+                  disabled={saving}
+                  onClick={() => {
+                    haptic("light");
+                    setSheet({ kind: "resetKyc" });
+                  }}
+                >
+                  {t("admin.userDetailResetKyc")}
                 </button>
               </div>
             ) : null}

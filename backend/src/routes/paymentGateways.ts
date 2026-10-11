@@ -39,6 +39,25 @@ import {
   tempChargeCode,
 } from "../lib/merchantPaymentLink.js";
 import { invalidateMeCache } from "../lib/meCache.js";
+import { redis } from "../db/redis.js";
+
+/** Avoid spamming /start when the same payer re-opens invoices. */
+const INVOICE_START_COOLDOWN_SEC = 60 * 60;
+const invoiceStartMemory = new Map<string, number>();
+
+async function shouldSendInvoiceStart(telegramId: string): Promise<boolean> {
+  const key = `bot:invoice-start:${telegramId}`;
+  const now = Date.now();
+  try {
+    const set = await redis.set(key, "1", "EX", INVOICE_START_COOLDOWN_SEC, "NX");
+    return set === "OK";
+  } catch {
+    const prev = invoiceStartMemory.get(telegramId) ?? 0;
+    if (now - prev < INVOICE_START_COOLDOWN_SEC * 1000) return false;
+    invoiceStartMemory.set(telegramId, now);
+    return true;
+  }
+}
 
 function generateGatewayApiKey(): string {
   return `tomanit:${randomBytes(32).toString("base64url")}`;
@@ -484,14 +503,17 @@ export async function paymentGatewayRoutes(app: FastifyInstance) {
     return { ok: true, status: "completed" };
   });
 
-  /** When a payer opens an invoice in Mini App — send main-bot /start welcome. */
+  /** When a payer opens an invoice in Mini App — send main-bot /start welcome (max once / hour). */
   app.post(
     "/merchant-pay/opened",
     { preHandler: requireAuthUpsert },
     async (request) => {
       const user = request.user!;
-      void sendBotStartToUser(user.telegramId);
-      return { ok: true };
+      const allow = await shouldSendInvoiceStart(user.telegramId);
+      if (allow) {
+        void sendBotStartToUser(user.telegramId);
+      }
+      return { ok: true, sent: allow };
     },
   );
 
@@ -802,7 +824,7 @@ export async function paymentGatewayRoutes(app: FastifyInstance) {
       }
 
       const card = await prisma.bankCard.findFirst({
-        where: { id: body.cardId, userId: user.id },
+        where: { id: body.cardId, userId: user.id, revokedAt: null },
       });
       if (!card) return reply.status(404).send({ error: "Card not found" });
 
@@ -982,7 +1004,7 @@ export async function paymentGatewayRoutes(app: FastifyInstance) {
       }
 
       const card = await prisma.bankCard.findFirst({
-        where: { id: body.cardId, userId: user.id },
+        where: { id: body.cardId, userId: user.id, revokedAt: null },
       });
       if (!card) return reply.status(404).send({ error: "کارت یافت نشد" });
 

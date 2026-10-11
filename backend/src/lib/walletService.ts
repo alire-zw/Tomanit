@@ -293,7 +293,7 @@ export async function applyDeposit(params: {
 
   if (bankCardId != null) {
     const card = await prisma.bankCard.findFirst({
-      where: { id: bankCardId, userId },
+      where: { id: bankCardId, userId, revokedAt: null },
     });
     if (!card) {
       throw Object.assign(new Error("Bank card not found"), { statusCode: 404 });

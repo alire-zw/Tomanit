@@ -38,7 +38,7 @@ function namesMatch(a: string | null | undefined, b: string | null | undefined):
 async function main() {
   const users = await prisma.user.findMany({
     where: {
-      bankCards: { some: { ownerName: { not: null } } },
+      bankCards: { some: { ownerName: { not: null }, revokedAt: null } },
     },
     select: {
       id: true,

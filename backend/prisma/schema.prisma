@@ -290,14 +290,17 @@ model BankCard {
   isPrimary      Boolean   @default(true) @map("is_primary")
   isVerified     Boolean   @default(false) @map("is_verified")
   matchedAt      DateTime? @map("matched_at")
+  /** Cleared by admin reset — hidden from user, kept for charge history. */
+  revokedAt      DateTime? @map("revoked_at")
   createdAt      DateTime  @default(now()) @map("created_at")
   updatedAt      DateTime  @updatedAt @map("updated_at")
 
   transactions   WalletTransaction[]
   gatewayCharges GatewayCharge[]
 
-  @@unique([userId, cardNumber])
   @@index([userId])
+  @@index([cardNumber])
+  @@index([userId, revokedAt])
   @@map("bank_cards")
 }
 

@@ -98,7 +98,7 @@ export async function cardRoutes(app: FastifyInstance): Promise<void> {
   // Upsert so first-time Mini App openers (e.g. invoice link) get a user row.
   app.get("/cards", { preHandler: requireAuthUpsert }, async (request) => {
     const cards = await prisma.bankCard.findMany({
-      where: { userId: request.user!.id },
+      where: { userId: request.user!.id, revokedAt: null },
       orderBy: [{ isPrimary: "desc" }, { createdAt: "desc" }],
     });
     return { cards: cards.map(serializeBankCard) };
@@ -120,9 +120,11 @@ export async function cardRoutes(app: FastifyInstance): Promise<void> {
       body.invoiceAmountToman > 0 &&
       body.invoiceAmountToman <= RELAXED_CARD_VERIFY_MAX_TOMAN;
 
-    const existingForUser = await prisma.bankCard.findUnique({
+    const existingForUser = await prisma.bankCard.findFirst({
       where: {
-        userId_cardNumber: { userId: user.id, cardNumber },
+        userId: user.id,
+        cardNumber,
+        revokedAt: null,
       },
       select: { id: true },
     });
@@ -137,6 +139,7 @@ export async function cardRoutes(app: FastifyInstance): Promise<void> {
       where: {
         cardNumber,
         userId: { not: user.id },
+        revokedAt: null,
       },
       select: { id: true },
     });
@@ -149,7 +152,7 @@ export async function cardRoutes(app: FastifyInstance): Promise<void> {
     }
 
     const previousCards = await prisma.bankCard.findMany({
-      where: { userId: user.id },
+      where: { userId: user.id, revokedAt: null },
       orderBy: [{ isPrimary: "desc" }, { createdAt: "desc" }],
       select: { ownerName: true },
     });
@@ -203,7 +206,7 @@ export async function cardRoutes(app: FastifyInstance): Promise<void> {
 
       const hasPrimary = previousCards.length > 0
         ? await prisma.bankCard.findFirst({
-            where: { userId: user.id, isPrimary: true },
+            where: { userId: user.id, isPrimary: true, revokedAt: null },
             select: { id: true },
           })
         : null;
