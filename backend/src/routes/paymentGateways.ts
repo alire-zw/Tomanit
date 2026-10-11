@@ -773,9 +773,8 @@ export async function paymentGatewayRoutes(app: FastifyInstance) {
         }
       }
 
-      const spoofUserId = 1 + Math.floor(Math.random() * 3000);
-      const gatewayOrderId = `WLT-${spoofUserId}-${Date.now()}`;
-      const gatewayDescription = `Wallet charge for user ${spoofUserId}`;
+      const gatewayOrderId = `WLT-${user.id}-${Date.now()}`;
+      const gatewayDescription = `Wallet charge for user ${user.id}`;
 
       const created = await prisma.gatewayCharge.create({
         data: {

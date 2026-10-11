@@ -246,7 +246,7 @@ export function MerchantPayResultPage() {
   const feeAmount = Number(charge?.feeToman ?? 0);
   const maskSeed =
     charge?.invoiceCode ||
-    charge?.payToken ||
+    charge?.code ||
     code ||
     redirectTrackId ||
     "tomanit";

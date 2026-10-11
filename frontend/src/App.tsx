@@ -49,7 +49,6 @@ const ProfileSettingsPage = lazyNamed(
   () => import("./pages/profile/ProfileSettings"),
   "ProfileSettingsPage",
 );
-const SupportListPage = lazyNamed(() => import("./pages/support/SupportList"), "SupportListPage");
 const SupportNewPage = lazyNamed(() => import("./pages/support/SupportNew"), "SupportNewPage");
 const SupportDetailPage = lazyNamed(
   () => import("./pages/support/SupportDetail"),
