@@ -6,6 +6,7 @@ import fastifyStatic from "@fastify/static";
 import formbody from "@fastify/formbody";
 import { prisma } from "../db/prisma.js";
 import { log } from "../lib/log.js";
+import { notifyGatewayShellFailure } from "../lib/gatewayAlerts.js";
 import { payProxyLimiter } from "../lib/rateLimit.js";
 import { clientIp } from "../lib/httpRateLimit.js";
 
@@ -22,22 +23,56 @@ const {
   refreshCaptcha,
   getStoredSession,
 } = require(path.join(GATEWAY_ROOT, "lib/gatewayService.js")) as {
-  loadGatewaySession: (zibalId: string) => Promise<{
+  loadGatewaySession: (trackId: string) => Promise<{
     ok: boolean;
     error?: string;
+    code?: string;
+    technical?: string;
     payment?: Record<string, unknown>;
+    trackId?: string;
     zibalId?: string;
   }>;
   refreshCaptcha: (sessionKey: string) => Promise<string>;
   getStoredSession: (sessionKey: string) => { jar: { toHeader: () => string; ingest: (r: Response) => void } } | undefined;
 };
 
+const { getGatewayProxyLabel } = require(
+  path.join(GATEWAY_ROOT, "lib/gatewayDispatcher.js"),
+) as {
+  getGatewayProxyLabel: () => string | null;
+};
+
 const { renderGatewayPage, renderErrorPage } = require(
   path.join(GATEWAY_ROOT, "lib/renderPage.js"),
 ) as {
-  renderGatewayPage: (payment: unknown, zibalId: string) => string;
-  renderErrorPage: (message: string, zibalId?: string) => string;
+  renderGatewayPage: (payment: unknown, trackId: string) => string;
+  renderErrorPage: (message: string, trackId?: string, code?: string) => string;
 };
+
+function shellErrorMeta(err: unknown): { message: string; code: string; technical: string } {
+  if (err && typeof err === "object") {
+    const e = err as { message?: string; code?: string; technical?: string; cause?: unknown };
+    const code = typeof e.code === "string" && /^PG0[123]$/.test(e.code) ? e.code : "PG03";
+    const technical =
+      typeof e.technical === "string"
+        ? e.technical
+        : e.cause instanceof Error
+          ? e.cause.message
+          : e.cause && typeof e.cause === "object" && "code" in e.cause
+            ? String((e.cause as { code?: string }).code || e.cause)
+            : e.message || String(err);
+    return {
+      message: e.message || "بارگذاری درگاه پرداخت ناموفق بود. لطفاً دوباره تلاش کنید.",
+      code,
+      technical: String(technical || "").slice(0, 500),
+    };
+  }
+  return {
+    message: "بارگذاری درگاه پرداخت ناموفق بود. لطفاً دوباره تلاش کنید.",
+    code: "PG03",
+    technical: String(err),
+  };
+}
 
 const { rewriteSepResultHtml } = require(
   path.join(GATEWAY_ROOT, "lib/rewriteSepHtml.js"),
@@ -137,7 +172,17 @@ export async function payShellRoutes(app: FastifyInstance) {
         lockedPanForTrack(trackId),
       ]);
       if (!result.ok || !result.payment) {
-        return htmlReply(reply, 502, renderErrorPage(result.error || "Gateway error", trackId));
+        const code = result.code || "PG03";
+        const message =
+          result.error || "بارگذاری درگاه پرداخت ناموفق بود. لطفاً دوباره تلاش کنید.";
+        void notifyGatewayShellFailure({
+          trackId,
+          code,
+          userMessage: message,
+          technical: result.technical || result.error || null,
+          proxy: getGatewayProxyLabel(),
+        });
+        return htmlReply(reply, 502, renderErrorPage(message, trackId, code));
       }
       const payment = {
         ...result.payment,
@@ -145,20 +190,22 @@ export async function payShellRoutes(app: FastifyInstance) {
       };
       return htmlReply(reply, 200, renderGatewayPage(payment, trackId));
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Internal error";
-      const cause =
-        err instanceof Error && err.cause instanceof Error
-          ? err.cause.message
-          : err instanceof Error && err.cause && typeof err.cause === "object"
-            ? String((err.cause as { code?: string }).code || err.cause)
-            : null;
-      log.error("pay-start", cause ? `${message} · ${cause}` : err);
-      return htmlReply(reply, 500, renderErrorPage(message, trackId));
+      const meta = shellErrorMeta(err);
+      log.error("pay-start", `${meta.code} · ${meta.message} · ${meta.technical}`);
+      void notifyGatewayShellFailure({
+        trackId,
+        code: meta.code,
+        userMessage: meta.message,
+        technical: meta.technical,
+        proxy: getGatewayProxyLabel(),
+      });
+      return htmlReply(reply, 500, renderErrorPage(meta.message, trackId, meta.code));
     }
   });
 
   // Safety net: cancel/timeout forms used to POST to /pay/start/:id with action="#".
   app.post("/pay/start/:trackId", async (request, reply) => {
+    const trackId = String((request.params as { trackId: string }).trackId || "");
     const body = (request.body || {}) as Record<string, unknown>;
     const action = String(body.Action || body.action || "").toLowerCase();
     if (action === "cancel" || action === "failedotp" || action === "changeculture" || action === "purchase") {
@@ -169,7 +216,7 @@ export async function payShellRoutes(app: FastifyInstance) {
     return htmlReply(
       reply,
       400,
-      renderErrorPage("درخواست پرداخت نامعتبر است. لطفاً دوباره تلاش کنید."),
+      renderErrorPage("درخواست پرداخت نامعتبر است. لطفاً دوباره تلاش کنید.", trackId, "PG03"),
     );
   });
 
@@ -335,8 +382,15 @@ async function proxySep(request: FastifyRequest, reply: FastifyReply) {
     const html = rewriteSepResultHtml(rawHtml);
     return htmlReply(reply, upstream.status, html);
   } catch (err) {
-    const message = err instanceof Error ? err.message : "SEP proxy error";
-    log.error("pay-sep-proxy", err);
-    return htmlReply(reply, 502, renderErrorPage(`SEP proxy error: ${message}`));
+    const meta = shellErrorMeta(err);
+    log.error("pay-sep-proxy", `${meta.code} · ${meta.technical}`);
+    void notifyGatewayShellFailure({
+      trackId: "sep-proxy",
+      code: meta.code,
+      userMessage: meta.message,
+      technical: meta.technical,
+      proxy: getGatewayProxyLabel(),
+    });
+    return htmlReply(reply, 502, renderErrorPage(meta.message, undefined, meta.code));
   }
 }

@@ -33,37 +33,125 @@ function escapeJsString(value) {
     .replace(/&/g, "\\u0026");
 }
 
-function renderErrorPage(message, zibalId) {
-  log.warn("Rendering error page", { message, zibalId });
+function renderErrorPage(message, trackId, code) {
+  const { sanitizePublicMessage: sanitize } = require("./gatewayErrors");
+  const safeMessage =
+    sanitize(message) || "بارگذاری درگاه پرداخت ناموفق بود. لطفاً دوباره تلاش کنید.";
+  const errorCode = String(code || "PG03").toUpperCase();
+  log.warn("Rendering error page", { code: errorCode, trackId });
+
+  const retryHref = trackId ? `/pay/start/${encodeURIComponent(trackId)}` : "";
+  const CHROME = "#e11d48";
+
   return `<!DOCTYPE html>
-<html lang="fa_IR">
+<html lang="fa" dir="rtl">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>خطا — درگاه سپ</title>
-  <link href="/pay/assets/css/app.css?v=25" rel="stylesheet">
-  <link href="/pay/assets/css/tomanit.css?v=25" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>خطا — درگاه پرداخت</title>
   <meta name="color-scheme" content="light only">
-  <style>
-    body { display:flex; align-items:center; justify-content:center; min-height:100vh; background:#f7f7fc; }
-    .error-card { max-width:480px; margin:24px; padding:32px; background:#fff; border-radius:12px; text-align:center; box-shadow:0 8px 24px rgba(45,58,74,.08); }
-    .error-card h1 { color:#2b73e3; margin-bottom:12px; font-size:20px; }
-    .error-card p { color:#2d3a4a; line-height:1.8; }
-    .error-card a { color:#2b73e3; }
-  </style>
+  <meta name="theme-color" content="${CHROME}">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    :root { color-scheme: light only; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; height: 100%; }
+    body {
+      font-family: "Vazirmatn", "Tahoma", "Segoe UI", sans-serif;
+      background: ${CHROME};
+      color: #fff;
+      -webkit-font-smoothing: antialiased;
+    }
+    .mpr {
+      display: flex;
+      flex-direction: column;
+      min-height: 100dvh;
+      max-height: 100dvh;
+      overflow: hidden;
+      background: ${CHROME};
+    }
+    .mpr__hero {
+      flex: 0 0 48%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 20px 22px 18px;
+      padding-top: calc(20px + env(safe-area-inset-top, 0px));
+    }
+    .mpr__status { display: flex; align-items: center; gap: 14px; width: 100%; }
+    .mpr__status-mark {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 56px; height: 56px; border-radius: 18px;
+      background: rgba(255,255,255,.16); color: #fff; flex: 0 0 auto;
+    }
+    .mpr__status-copy { display: flex; flex-direction: column; gap: 4px; min-width: 0; text-align: start; }
+    .mpr__status-kicker {
+      margin: 0; font-size: 12px; font-weight: 600; letter-spacing: .02em;
+      color: rgba(255,255,255,.72); line-height: 1.2;
+    }
+    .mpr__status-title {
+      margin: 0; font-size: clamp(26px, 7vw, 34px); font-weight: 900;
+      letter-spacing: -.04em; line-height: 1.15; color: #fff;
+    }
+    .mpr__amount-block { display: flex; flex-direction: column; gap: 6px; width: 100%; }
+    .mpr__amount-label {
+      margin: 0; font-size: 16px; font-weight: 600; line-height: 1.7;
+      color: rgba(255,255,255,.92); max-width: 28ch;
+    }
+    .mpr__code {
+      display: inline-flex; align-items: center; gap: 8px;
+      margin: 0; padding: 8px 12px; width: fit-content;
+      border-radius: 999px; background: rgba(255,255,255,.14);
+      font-size: 13px; font-weight: 700; letter-spacing: .04em;
+      font-variant-numeric: tabular-nums;
+    }
+    .mpr__sheet {
+      flex: 1 1 auto;
+      display: flex; flex-direction: column; justify-content: flex-end;
+      gap: 14px;
+      background: #fff;
+      color: #0f172a;
+      border-radius: 28px 28px 0 0;
+      padding: 22px 20px calc(22px + env(safe-area-inset-bottom, 0px));
+      box-shadow: 0 -10px 40px rgba(15, 23, 42, .12);
+    }
+    .mpr__shop {
+      border: 1px solid #e2e8f0;
+      border-radius: 18px;
+      padding: 14px 16px;
+      background: #f8fafc;
+    }
+    .mpr__shop-kicker {
+      margin: 0 0 4px; font-size: 12px; font-weight: 600; color: #64748b;
+    }
+    .mpr__shop-name {
+      margin: 0; font-size: 17px; font-weight: 800; letter-spacing: -.02em;
+    }
+    .mpr__actions { display: flex; flex-direction: column; gap: 10px; }
+    .mpr__btn {
+      display: flex; align-items: center; justify-content: center;
+      min-height: 52px; border-radius: 16px; border: 0;
+      font: inherit; font-size: 16px; font-weight: 800;
+      text-decoration: none; cursor: pointer;
+    }
+    .mpr__btn--primary { background: ${CHROME}; color: #fff; }
+    .mpr__btn--ghost { background: #f1f5f9; color: #0f172a; }
+    .mpr__hint { margin: 0; text-align: center; font-size: 12px; color: #94a3b8; line-height: 1.6; }
+  </style>
   <script>
     (function () {
-      var CHROME = "#2b73e3";
+      var CHROME = "${CHROME}";
       document.documentElement.setAttribute("data-theme", "light");
       document.documentElement.style.colorScheme = "light";
       function apply() {
         var tg = window.Telegram && window.Telegram.WebApp;
         if (!tg) return false;
         try { tg.ready(); } catch (e) {}
+        try { tg.expand && tg.expand(); } catch (e) {}
         try { tg.setHeaderColor && tg.setHeaderColor(CHROME); } catch (e) {}
         try { tg.setBackgroundColor && tg.setBackgroundColor(CHROME); } catch (e) {}
-        try { tg.setBottomBarColor && tg.setBottomBarColor("#f7f7fc"); } catch (e) {}
+        try { tg.setBottomBarColor && tg.setBottomBarColor("#ffffff"); } catch (e) {}
         return true;
       }
       if (!apply()) {
@@ -73,10 +161,41 @@ function renderErrorPage(message, zibalId) {
   </script>
 </head>
 <body>
-  <div class="error-card">
-    <h1>خطا در بارگذاری درگاه</h1>
-    <p>${escapeHtml(message)}</p>
-    ${zibalId ? `<p><a href="/start/${escapeHtml(zibalId)}">تلاش مجدد</a></p>` : ""}
+  <div class="mpr">
+    <section class="mpr__hero">
+      <div class="mpr__status">
+        <span class="mpr__status-mark" aria-hidden="true">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+            <path d="M12 8v5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+            <circle cx="12" cy="16.5" r="1.2" fill="currentColor"/>
+            <path d="M12 3.5 2.8 19.2a1.2 1.2 0 0 0 1 1.8h16.4a1.2 1.2 0 0 0 1-1.8L12 3.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+          </svg>
+        </span>
+        <div class="mpr__status-copy">
+          <p class="mpr__status-kicker">درگاه پرداخت</p>
+          <h1 class="mpr__status-title">پرداخت ناموفق</h1>
+        </div>
+      </div>
+      <div class="mpr__amount-block">
+        <p class="mpr__amount-label">${escapeHtml(safeMessage)}</p>
+        <p class="mpr__code">کد خطا · ${escapeHtml(errorCode)}</p>
+      </div>
+    </section>
+    <section class="mpr__sheet">
+      <div class="mpr__shop">
+        <p class="mpr__shop-kicker">تومانیت</p>
+        <p class="mpr__shop-name">اتصال امن به درگاه پرداخت</p>
+      </div>
+      <div class="mpr__actions">
+        ${
+          retryHref
+            ? `<a class="mpr__btn mpr__btn--primary" href="${escapeHtml(retryHref)}">تلاش مجدد</a>`
+            : ""
+        }
+        <button type="button" class="mpr__btn mpr__btn--ghost" onclick="try{Telegram.WebApp.close()}catch(e){history.back()}">بستن</button>
+      </div>
+      <p class="mpr__hint">در صورت تکرار مشکل، کد خطا را برای پشتیبانی ارسال کنید.</p>
+    </section>
   </div>
 </body>
 </html>`;

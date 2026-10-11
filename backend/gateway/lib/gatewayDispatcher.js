@@ -1,25 +1,26 @@
 "use strict";
 
 /**
- * Outbound HTTP dispatcher for Zibal / SEP.
+ * Outbound HTTP dispatcher for payment gateway hosts.
  *
  * GATEWAY_PROXY examples:
  *   http://user:pass@HOST:PORT
  *   socks5://user:pass@HOST:PORT
  *   socks4://HOST:PORT
  *
- * HTTPS to the bank stays end-to-end encrypted (TLS). The proxy only sees
- * that you connect to shaparak/zibal — not card fields inside HTTPS.
- * Prefer a private Iran VPS; free public proxies die often.
+ * Prefer a private Iran exit; free public proxies are unreliable.
  */
 
 const http = require("node:http");
 const https = require("node:https");
-const { Agent, ProxyAgent, fetch: undiciFetch } = require("undici");
+const { Agent, ProxyAgent, fetch as undiciFetch } = require("undici");
 const { SocksProxyAgent } = require("socks-proxy-agent");
 const { createLogger } = require("./logger");
 
 const log = createLogger("gatewayProxy");
+
+const CONNECT_TIMEOUT_MS = 25_000;
+const REQUEST_TIMEOUT_MS = 35_000;
 
 let cachedMode = null; // "direct" | "http" | "socks"
 let cachedDispatcher = null;
@@ -56,22 +57,37 @@ function ensureDispatcher() {
       pipelining: 1,
       connect: {
         family: 4,
-        timeout: 8_000,
+        timeout: CONNECT_TIMEOUT_MS,
       },
+      bodyTimeout: REQUEST_TIMEOUT_MS,
+      headersTimeout: REQUEST_TIMEOUT_MS,
     });
+    log.warn("GATEWAY_PROXY unset — bank hosts may fail from foreign servers");
     return;
   }
 
   cachedProxyLabel = redactProxy(proxy);
   if (/^socks/i.test(proxy)) {
     cachedMode = "socks";
-    cachedSocksAgent = new SocksProxyAgent(proxy);
+    cachedSocksAgent = new SocksProxyAgent(proxy, {
+      timeout: CONNECT_TIMEOUT_MS,
+    });
     log.info("GATEWAY_PROXY enabled (socks)", { proxy: cachedProxyLabel });
     return;
   }
 
   cachedMode = "http";
-  cachedDispatcher = new ProxyAgent(proxy);
+  cachedDispatcher = new ProxyAgent({
+    uri: proxy,
+    connections: 16,
+    pipelining: 1,
+    connect: {
+      timeout: CONNECT_TIMEOUT_MS,
+      family: 4,
+    },
+    bodyTimeout: REQUEST_TIMEOUT_MS,
+    headersTimeout: REQUEST_TIMEOUT_MS,
+  });
   log.info("GATEWAY_PROXY enabled (http)", { proxy: cachedProxyLabel });
 }
 
@@ -96,14 +112,26 @@ async function gatewayFetch(url, options = {}) {
   const body = options.body;
 
   if (cachedMode !== "socks") {
-    return undiciFetch(url, {
-      ...options,
-      method,
-      headers,
-      body,
-      dispatcher: cachedDispatcher,
-      redirect: options.redirect || "follow",
-    });
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+    try {
+      return await undiciFetch(url, {
+        ...options,
+        method,
+        headers,
+        body,
+        dispatcher: cachedDispatcher,
+        redirect: options.redirect || "follow",
+        signal: options.signal || controller.signal,
+      });
+    } catch (err) {
+      if (err && typeof err === "object" && err.name === "AbortError") {
+        throw Object.assign(new Error("timeout"), { code: "ETIMEDOUT" });
+      }
+      throw err;
+    } finally {
+      clearTimeout(timer);
+    }
   }
 
   return fetchViaSocks(url, { method, headers, body, redirect: options.redirect });
@@ -122,7 +150,7 @@ function fetchViaSocks(url, { method, headers, body, redirect }) {
           method,
           headers,
           agent: cachedSocksAgent,
-          timeout: 20_000,
+          timeout: REQUEST_TIMEOUT_MS,
         },
         (res) => {
           const chunks = [];
@@ -146,7 +174,10 @@ function fetchViaSocks(url, { method, headers, body, redirect }) {
             const headerMap = new Map();
             for (const [key, value] of Object.entries(res.headers)) {
               if (value == null) continue;
-              headerMap.set(String(key).toLowerCase(), Array.isArray(value) ? value.join(", ") : String(value));
+              headerMap.set(
+                String(key).toLowerCase(),
+                Array.isArray(value) ? value.join(", ") : String(value),
+              );
             }
 
             resolve({
