@@ -4,20 +4,20 @@ import {
   useLayoutEffect,
   useMemo,
   useState,
-  type ComponentType,
 } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import ArrowUpLeft01Icon from "../../components/icons/hugeicons/ArrowUpLeft01Icon";
 import ArrowUpRight01Icon from "../../components/icons/hugeicons/ArrowUpRight01Icon";
-import HoldPhoneIcon from "../../components/icons/hugeicons/HoldPhoneIcon";
-import RoboticIcon from "../../components/icons/hugeicons/RoboticIcon";
-import WebDesign01Icon from "../../components/icons/hugeicons/WebDesign01Icon";
-import type { HugeIconProps } from "../../components/icons/hugeicons/constants";
-import { useI18n } from "../../context/I18nContext";
 import { useTheme } from "../../context/ThemeContext";
+import { useGatewayLocale } from "../../hooks/useGatewayLocale";
 import { useTelegram } from "../../hooks/useTelegram";
 import { localeToBcp47 } from "../../i18n";
 import { formatFaNumber } from "../../lib/format";
+import {
+  GATEWAY_DISPLAY_NAME,
+  gatewayReferenceDisplay,
+  gatewayTerminalDisplay,
+} from "../../lib/gatewayDisplayMask";
 import {
   applyInvoiceTheme,
   cacheInvoiceTheme,
@@ -40,21 +40,6 @@ import "./MerchantPay.css";
 import "./MerchantPayResult.css";
 
 const AMOUNT_COLOR = "#fbbf24";
-
-type ChannelIcon = ComponentType<HugeIconProps>;
-
-function channelMeta(
-  channel: NonNullable<MerchantPayCharge["shopChannel"]>,
-  t: (k: string) => string,
-): { label: string; Icon: ChannelIcon } {
-  if (channel === "website") {
-    return { label: t("myShop.regChannelWebsite"), Icon: WebDesign01Icon };
-  }
-  if (channel === "bot") {
-    return { label: t("myShop.regChannelBot"), Icon: RoboticIcon };
-  }
-  return { label: t("myShop.regChannelManual"), Icon: HoldPhoneIcon };
-}
 
 function CheckIcon() {
   return (
@@ -126,7 +111,7 @@ export function MerchantPayResultPage() {
   const redirectTrackId = params.get("trackId") || "";
   const redirectAmount = params.get("amount");
   const redirectPaidAt = params.get("paidAt") || undefined;
-  const { t, locale } = useI18n();
+  const { t, locale } = useGatewayLocale();
   const { haptic } = useTelegram();
   const { colorScheme } = useTheme();
   const [charge, setCharge] = useState<MerchantPayCharge | null>(null);
@@ -259,25 +244,15 @@ export function MerchantPayResultPage() {
 
   const totalAmount = Number(charge?.amountToman ?? 0);
   const feeAmount = Number(charge?.feeToman ?? 0);
-  const shopName = charge?.shopName?.trim() || null;
-  const shopLogo = charge?.shopLogoDataUrl || null;
-  const shopInitial = shopName?.slice(0, 1) || "—";
-
-  const sellLabel =
-    charge?.shopSellType === "services"
-      ? t("myShop.regSellServices")
-      : t("myShop.regSellGoods");
-
-  const channel = charge?.shopChannel
-    ? channelMeta(charge.shopChannel, t)
-    : null;
-  const ChannelIcon = channel?.Icon;
-  const channelHref =
-    charge?.shopChannel === "website"
-      ? charge.shopSiteUrl
-      : charge?.shopChannel === "bot"
-        ? charge.shopBotUrl
-        : null;
+  const maskSeed =
+    charge?.invoiceCode ||
+    charge?.payToken ||
+    code ||
+    redirectTrackId ||
+    "tomanit";
+  const displayTerminal = gatewayTerminalDisplay(maskSeed);
+  const displayReference = gatewayReferenceDisplay(maskSeed);
+  const displayTrackId = gatewayReferenceDisplay(`${maskSeed}:track`);
 
   const whenText = useMemo(() => {
     if (!charge) return "—";
@@ -287,21 +262,6 @@ export function MerchantPayResultPage() {
       t("myShop.merchantPayResultHour"),
     );
   }, [charge, locale, t]);
-
-  const openChannel = () => {
-    if (!channelHref) return;
-    haptic("light");
-    const tg = window.Telegram?.WebApp;
-    if (tg?.openTelegramLink && /t\.me\//i.test(channelHref)) {
-      tg.openTelegramLink(channelHref);
-      return;
-    }
-    if (tg?.openLink) {
-      tg.openLink(channelHref);
-      return;
-    }
-    window.open(channelHref, "_blank", "noopener,noreferrer");
-  };
 
   const onDone = () => {
     haptic("light");
@@ -382,40 +342,20 @@ export function MerchantPayResultPage() {
           <div className="mpay__shop">
             <div className="mpay__shop-head">
               <span className="mpay__shop-avatar" aria-hidden>
-                {shopLogo ? (
-                  <img
-                    src={shopLogo}
-                    alt=""
-                    width={58}
-                    height={58}
-                    decoding="async"
-                  />
-                ) : (
-                  <span className="mpay__shop-avatar-fallback">{shopInitial}</span>
-                )}
+                <img
+                  src="/Tomanit.webp"
+                  alt=""
+                  width={58}
+                  height={58}
+                  decoding="async"
+                />
               </span>
               <div className="mpay__shop-title">
-                <p className="mpay__shop-kicker">{t("myShop.merchantPayShopLabel")}</p>
-                <h2 className="mpay__shop-name">{shopName || "—"}</h2>
+                <p className="mpay__shop-kicker">
+                  {t("myShop.merchantPayAcceptorLabel")}
+                </p>
+                <h2 className="mpay__shop-name">{GATEWAY_DISPLAY_NAME}</h2>
               </div>
-              {channel && ChannelIcon ? (
-                channelHref ? (
-                  <button
-                    type="button"
-                    className="mpay__channel-btn"
-                    onClick={openChannel}
-                    aria-label={channel.label}
-                  >
-                    <ChannelIcon variant="bulk-rounded" size={14} color="currentColor" />
-                    <span>{channel.label}</span>
-                  </button>
-                ) : (
-                  <span className="mpay__channel-btn mpay__channel-btn--static">
-                    <ChannelIcon variant="bulk-rounded" size={14} color="currentColor" />
-                    <span>{channel.label}</span>
-                  </span>
-                )
-              ) : null}
             </div>
 
             <div className="mpay__shop-rule" aria-hidden />
@@ -423,16 +363,18 @@ export function MerchantPayResultPage() {
             <div className="mpay__shop-facts">
               <div className="mpay__shop-fact">
                 <span className="mpay__shop-fact-label">
-                  {t("myShop.merchantPayShopSellType")}
+                  {t("myShop.merchantPayTerminal")}
                 </span>
-                <span className="mpay__shop-fact-value">{sellLabel}</span>
+                <span className="mpay__shop-fact-value mpr__val--mono">
+                  {displayTerminal}
+                </span>
               </div>
               <div className="mpay__shop-fact">
                 <span className="mpay__shop-fact-label">
-                  {t("myShop.merchantPayShopChannel")}
+                  {t("myShop.merchantPayReference")}
                 </span>
-                <span className="mpay__shop-fact-value">
-                  {channel?.label || "—"}
+                <span className="mpay__shop-fact-value mpr__val--mono">
+                  {displayReference}
                 </span>
               </div>
             </div>
@@ -443,7 +385,7 @@ export function MerchantPayResultPage() {
           <div className="mpr__row">
             <span className="mpr__key">{t("myShop.merchantPayId")}</span>
             <span className="mpr__val mpr__val--mono">
-              {charge?.invoiceCode || "—"}
+              {charge ? displayTrackId : "—"}
             </span>
           </div>
           <div className="mpr__row">

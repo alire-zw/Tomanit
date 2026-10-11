@@ -1,6 +1,7 @@
 "use strict";
 
 const { createLogger } = require("./logger");
+const { brandSepHtml } = require("./brandSepHtml");
 
 const log = createLogger("rewriteSepHtml");
 
@@ -54,6 +55,9 @@ function rewriteSepResultHtml(html) {
       out = out.replace("</head>", `  ${themeLink}\n</head>`);
     }
   }
+
+  // Re-apply تومانیت + random terminal/ref after culture switch or bank result HTML.
+  out = brandSepHtml(out);
 
   log.debug("SEP HTML rewritten for /pay shell", {
     originalLength: html.length,

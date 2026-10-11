@@ -18,9 +18,9 @@ import WavingHand01Icon from "../../components/icons/hugeicons/WavingHand01Icon"
 import WebDesign01Icon from "../../components/icons/hugeicons/WebDesign01Icon";
 import AiAutoRotateIcon from "../../components/icons/hugeicons/AiAutoRotateIcon";
 import type { HugeIconProps } from "../../components/icons/hugeicons/constants";
-import { useI18n } from "../../context/I18nContext";
 import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../hooks/useAuth";
+import { useGatewayLocale } from "../../hooks/useGatewayLocale";
 import { useTelegram } from "../../hooks/useTelegram";
 import { LOCALES, type LocaleCode } from "../../i18n";
 import { getBankVisual } from "../../lib/bankDetect";
@@ -126,7 +126,7 @@ function cardDisplayName(card: BankCardRecord, locale: LocaleCode): string {
 
 export function MerchantPayPage() {
   const { code = "" } = useParams();
-  const { t, locale, setLocale } = useI18n();
+  const { t, locale, setLocale } = useGatewayLocale();
   const { themeMode, colorScheme, setThemeMode } = useTheme();
   const navigate = useNavigate();
   const { haptic, openInApp } = useTelegram();
