@@ -696,9 +696,12 @@ export async function shopRoutes(app: FastifyInstance): Promise<void> {
       return reply.status(404).send({ error: "Not found" });
     }
 
-    // Safety net: if payment failed but merchant callback was missed, send invoice.failed.
+    // Safety net: only notify failure after the charge has stayed failed a while
+    // (avoids racing a verify that completes a few seconds later).
+    const failedAgeMs = Date.now() - new Date(charge.updatedAt).getTime();
     if (
       charge.status === "failed" &&
+      failedAgeMs >= 15_000 &&
       charge.merchantPaymentLink?.callbackUrl &&
       !failedCallbackNotified.has(charge.id)
     ) {

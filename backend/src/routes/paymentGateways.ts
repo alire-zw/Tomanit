@@ -5,20 +5,11 @@ import { prisma } from "../db/prisma.js";
 import { env } from "../config/env.js";
 import { requireAdmin, requireAuth, requireAuthUpsert } from "../middleware/auth.js";
 import { sendBotStartToUser } from "../lib/botUpdates.js";
-import { ensurePayerWalletTxForCharge } from "../lib/merchantInvoiceWalletTx.js";
 import { parseIdParam } from "../lib/ids.js";
-import { ensureWallet } from "../lib/walletService.js";
-import { getAssetRateToman } from "../lib/swapwallet.js";
-import { notifyTomanDeposit } from "../lib/bot/notifyTomanDeposit.js";
-import { notifyShopReportTransaction } from "../lib/shopReportBot.js";
 import { log } from "../lib/log.js";
 import { gatewayWebhookLimiter } from "../lib/rateLimit.js";
 import { clientIp } from "../lib/httpRateLimit.js";
-import {
-  maybeAlertGatewayCapacity,
-  recordGatewayChargeFailure,
-  recordGatewayChargeSuccess,
-} from "../lib/gatewayAlerts.js";
+import { recordGatewayChargeFailure } from "../lib/gatewayAlerts.js";
 import {
   calcCommissionToman,
   isGatewayDailyFull,
@@ -38,7 +29,7 @@ import {
   formatInvoiceCode,
   tempChargeCode,
 } from "../lib/merchantPaymentLink.js";
-import { invalidateMeCache } from "../lib/meCache.js";
+import { finalizeGatewayChargeSuccess } from "../lib/gatewayChargeFinalize.js";
 import { redis } from "../db/redis.js";
 
 /** Avoid spamming /start when the same payer re-opens invoices. */
@@ -289,218 +280,144 @@ export async function paymentGatewayRoutes(app: FastifyInstance) {
     }
 
     if (!body.success) {
+      // Soft-fail only from pending. A later success webhook can still recover
+      // (Zibal often hits callback with success=1&status=2 before verify finishes).
       const failed = await prisma.gatewayCharge.updateMany({
         where: { id: charge.id, status: "pending" },
         data: { status: "failed", trackId: String(body.trackId) },
       });
-      void recordGatewayChargeFailure(charge.gatewayId);
+      if (failed.count === 1) {
+        void recordGatewayChargeFailure(charge.gatewayId);
+      }
 
-      // Merchant invoice: always notify callbackUrl on payment failure.
-      // (Even if charge was already failed, retry callback — receivers are idempotent.)
-      if (charge.kind === "merchant_invoice" && charge.merchantPaymentLink) {
+      // Defer merchant failure notify — only when still failed after a short window
+      // so a racing verify/success webhook can complete the charge first.
+      if (
+        failed.count === 1 &&
+        charge.kind === "merchant_invoice" &&
+        charge.merchantPaymentLink
+      ) {
         const link = charge.merchantPaymentLink;
+        const chargeId = charge.id;
+        const trackId = String(body.trackId);
+        const amountToman = Number(
+          charge.invoiceAmountToman ?? link.amountToman,
+        );
         log.info("merchant-invoice-failed-webhook", {
           chargeCode: charge.code,
           invoiceId: link.id,
           hasCallback: Boolean(link.callbackUrl),
-          newlyFailed: failed.count === 1,
+          newlyFailed: true,
+          deferredMs: 8_000,
         });
-        void notifyMerchantInvoiceCallback({
-          link,
-          status: "failed",
-          trackId: String(body.trackId),
-          amountToman: Number(
-            charge.invoiceAmountToman ?? link.amountToman,
-          ),
-        });
+        setTimeout(() => {
+          void (async () => {
+            const latest = await prisma.gatewayCharge.findUnique({
+              where: { id: chargeId },
+              select: { status: true },
+            });
+            if (!latest || latest.status !== "failed") {
+              log.info("merchant-invoice-failed-webhook", {
+                chargeCode: charge.code,
+                skipped: "recovered_before_notify",
+                status: latest?.status ?? null,
+              });
+              return;
+            }
+            void notifyMerchantInvoiceCallback({
+              link,
+              status: "failed",
+              trackId,
+              amountToman,
+            });
+          })();
+        }, 8_000);
       }
       return { ok: true, status: "failed" };
     }
 
-    const amountToman = Number(charge.amountToman);
-    if (!Number.isFinite(amountToman) || amountToman <= 0) {
-      return reply.status(400).send({ error: "Invalid charge amount" });
+    try {
+      const result = await finalizeGatewayChargeSuccess(charge.id, {
+        trackId: body.trackId,
+        amountToman: body.amountToman,
+        paidAt: body.paidAt,
+        refNumber: body.refNumber,
+      });
+      return { ok: true, status: result.status === "already_completed" ? "completed" : "completed" };
+    } catch (err) {
+      const statusCode =
+        err && typeof err === "object" && "statusCode" in err
+          ? Number((err as { statusCode: number }).statusCode)
+          : 500;
+      const message = err instanceof Error ? err.message : "Finalize failed";
+      return reply.status(Number.isFinite(statusCode) ? statusCode : 500).send({
+        error: message,
+      });
     }
-    if (body.amountToman != null && Number(body.amountToman) !== amountToman) {
+  });
+
+  /**
+   * Recover after gateway redirect with success=1 when the failure webhook
+   * raced ahead of verify (common with Zibal status=2 → then verify OK).
+   */
+  app.post("/public/merchant-pay-result/:code/confirm", async (request, reply) => {
+    const code = String((request.params as { code?: string }).code || "").trim();
+    if (!code) return reply.status(400).send({ error: "Invalid code" });
+
+    const body = z
+      .object({
+        trackId: z.union([z.string(), z.number()]),
+        amountToman: z.coerce.number().int().positive().optional(),
+        paidAt: z.string().optional(),
+      })
+      .parse(request.body ?? {});
+
+    const charge = await prisma.gatewayCharge.findFirst({
+      where: { code, kind: "merchant_invoice" },
+      select: {
+        id: true,
+        status: true,
+        trackId: true,
+        amountToman: true,
+      },
+    });
+    if (!charge) return reply.status(404).send({ error: "Not found" });
+    if (charge.status === "completed") {
+      return { ok: true, status: "completed" };
+    }
+    if (charge.status !== "pending" && charge.status !== "failed") {
+      return reply.status(409).send({ error: "Charge not confirmable" });
+    }
+    if (
+      charge.trackId &&
+      String(charge.trackId) !== String(body.trackId)
+    ) {
+      return reply.status(409).send({ error: "trackId mismatch" });
+    }
+    if (
+      body.amountToman != null &&
+      Number(body.amountToman) !== Number(charge.amountToman)
+    ) {
       return reply.status(400).send({ error: "Amount mismatch" });
     }
 
-    const commissionToman = calcCommissionToman(
-      amountToman,
-      Number(charge.commissionPercent || charge.gateway.commissionPercent || 0),
-    );
-
-    const isMerchantInvoice = charge.kind === "merchant_invoice";
-    const invoiceAmountToman = Number(
-      charge.invoiceAmountToman ?? charge.merchantPaymentLink?.amountToman ?? 0,
-    );
-
-    let usdtRateToman: number | null = null;
-    let trxRateToman: number | null = null;
-    if (!isMerchantInvoice) {
-      try {
-        const rate = await getAssetRateToman("usdt");
-        usdtRateToman = rate > 0 ? rate : null;
-      } catch {
-        usdtRateToman = null;
-      }
-    } else {
-      try {
-        const rate = await getAssetRateToman("trx");
-        trxRateToman = rate > 0 ? rate : null;
-      } catch {
-        trxRateToman = null;
-      }
-    }
-
-    let credited = false;
-    let shopOwnerTelegramId: string | null = null;
-    await prisma.$transaction(async (tx) => {
-      const claimed = await tx.gatewayCharge.updateMany({
-        where: { id: charge.id, status: "pending" },
-        data: {
-          status: "completed",
-          trackId: String(body.trackId),
-          paidAt: body.paidAt ? new Date(body.paidAt) : new Date(),
-          commissionToman: BigInt(commissionToman),
-          ...(trxRateToman != null ? { trxRateToman } : {}),
-        },
+    try {
+      const result = await finalizeGatewayChargeSuccess(charge.id, {
+        trackId: body.trackId,
+        amountToman: body.amountToman ?? Number(charge.amountToman),
+        paidAt: body.paidAt,
       });
-      if (claimed.count !== 1) return;
-
-      if (isMerchantInvoice) {
-        if (
-          !charge.merchantPaymentLinkId ||
-          !Number.isFinite(invoiceAmountToman) ||
-          invoiceAmountToman <= 0
-        ) {
-          throw new Error("Invalid merchant invoice charge");
-        }
-
-        const linkClaimed = await tx.merchantPaymentLink.updateMany({
-          where: { id: charge.merchantPaymentLinkId, status: "open" },
-          data: {
-            status: "paid",
-            paidAt: body.paidAt ? new Date(body.paidAt) : new Date(),
-          },
-        });
-        if (linkClaimed.count !== 1) {
-          // Invoice already paid elsewhere — keep charge completed but skip shop credit.
-        } else {
-          const shopId = charge.merchantPaymentLink!.shopId;
-          const fullFee = Number(charge.feeToman ?? 0);
-          // Works for payer / merchant / split: credit = chargeTotal − fullFee.
-          const creditToman = Math.max(
-            0,
-            Number.isFinite(fullFee) && fullFee > 0
-              ? amountToman - fullFee
-              : invoiceAmountToman,
-          );
-          await tx.merchantShop.update({
-            where: { id: shopId },
-            data: { balanceToman: { increment: BigInt(creditToman) } },
-          });
-          shopOwnerTelegramId =
-            charge.merchantPaymentLink?.shop.user.telegramId ?? null;
-        }
-        // Payer history — always create when this charge completes (even if link was already paid).
-        if (charge.merchantPaymentLink && !charge.walletTxId) {
-          await ensurePayerWalletTxForCharge(
-            {
-              id: charge.id,
-              code: charge.code,
-              userId: charge.userId,
-              amountToman: charge.amountToman,
-              feeToman: charge.feeToman,
-              trackId: String(body.trackId),
-              bankCardId: charge.bankCardId,
-              paidAt: body.paidAt ? new Date(body.paidAt) : new Date(),
-              createdAt: charge.createdAt,
-              walletTxId: null,
-              merchantPaymentLink: charge.merchantPaymentLink,
-              gateway: charge.gateway,
-            },
-            tx,
-          );
-        }
-      } else {
-        await ensureWallet(charge.userId);
-        await tx.wallet.update({
-          where: { userId: charge.userId },
-          data: { tomanBalance: { increment: BigInt(amountToman) } },
-        });
-
-        const wtx = await tx.walletTransaction.create({
-          data: {
-            userId: charge.userId,
-            type: "recharge",
-            status: "completed",
-            asset: "toman",
-            amount: amountToman,
-            amountToman: amountToman,
-            unitPriceToman: 1,
-            counterUnitPriceToman: usdtRateToman,
-            paymentMethod: "payment_gateway",
-            bankCardId: charge.bankCardId,
-            gatewayName: charge.gateway.displayName,
-            gatewayTrackId: String(body.trackId),
-            gatewayRefId: body.refNumber ?? null,
-            note: charge.description || "شارژ کیف پول",
-            completedAt: new Date(),
-          },
-        });
-
-        await tx.gatewayCharge.update({
-          where: { id: charge.id },
-          data: { walletTxId: wtx.id },
-        });
-      }
-
-      await tx.paymentGateway.update({
-        where: { id: charge.gatewayId },
-        data: {
-          balanceToman: { increment: BigInt(amountToman) },
-          todayCount: { increment: 1 },
-          consecutiveFailCount: 0,
-        },
+      return { ok: true, status: result.status, credited: result.credited };
+    } catch (err) {
+      const statusCode =
+        err && typeof err === "object" && "statusCode" in err
+          ? Number((err as { statusCode: number }).statusCode)
+          : 500;
+      const message = err instanceof Error ? err.message : "Confirm failed";
+      return reply.status(Number.isFinite(statusCode) ? statusCode : 500).send({
+        error: message,
       });
-      credited = true;
-    });
-
-    if (credited) {
-      void recordGatewayChargeSuccess(charge.gatewayId);
-      void maybeAlertGatewayCapacity(charge.gatewayId);
-      if (isMerchantInvoice) {
-        if (shopOwnerTelegramId) {
-          void invalidateMeCache(shopOwnerTelegramId);
-        }
-        if (charge.merchantPaymentLink) {
-          const paidLink = {
-            ...charge.merchantPaymentLink,
-            status: "paid" as const,
-            paidAt: body.paidAt ? new Date(body.paidAt) : new Date(),
-          };
-          void notifyMerchantInvoiceCallback({
-            link: paidLink,
-            status: "paid",
-            trackId: String(body.trackId),
-            amountToman: invoiceAmountToman,
-          });
-          if (shopOwnerTelegramId) {
-            void notifyShopReportTransaction(charge.id);
-          }
-        }
-      } else {
-        void notifyTomanDeposit({
-          userId: charge.userId,
-          amountToman,
-          usdtRateToman,
-          gatewayName: charge.gateway.displayName,
-        });
-      }
     }
-
-    return { ok: true, status: "completed" };
   });
 
   /** When a payer opens an invoice in Mini App — send main-bot /start welcome (max once / hour). */

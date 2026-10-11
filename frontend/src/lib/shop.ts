@@ -391,6 +391,18 @@ export function fetchMerchantPayCharge(
   });
 }
 
+/** Recover charge after gateway redirect success=1 (verify-race with early fail webhook). */
+export function confirmMerchantPayCharge(
+  code: string,
+  body: { trackId: string; amountToman?: number; paidAt?: string },
+): Promise<{ ok: boolean; status: string; credited?: boolean }> {
+  return apiFetch(`/public/merchant-pay-result/${encodeURIComponent(code)}/confirm`, {
+    method: "POST",
+    auth: false,
+    body,
+  });
+}
+
 export function registerShop(
   payload: ShopRegisterPayload,
 ): Promise<{ shop: MerchantShop }> {

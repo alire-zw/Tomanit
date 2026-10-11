@@ -27,6 +27,7 @@ import {
   type InvoiceThemeId,
 } from "../../lib/invoiceThemes";
 import {
+  confirmMerchantPayCharge,
   fetchMerchantPayCharge,
   notifyMerchantPayOpened,
   type MerchantPayCharge,
@@ -121,6 +122,10 @@ export function MerchantPayResultPage() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const code = params.get("code") || "";
+  const redirectSuccess = params.get("success") === "1";
+  const redirectTrackId = params.get("trackId") || "";
+  const redirectAmount = params.get("amount");
+  const redirectPaidAt = params.get("paidAt") || undefined;
   const { t, locale } = useI18n();
   const { haptic } = useTelegram();
   const { colorScheme } = useTheme();
@@ -178,6 +183,28 @@ export function MerchantPayResultPage() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    if (!code || !redirectSuccess || !redirectTrackId) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const amountNum = redirectAmount ? Number(redirectAmount) : undefined;
+        await confirmMerchantPayCharge(code, {
+          trackId: redirectTrackId,
+          amountToman:
+            amountNum != null && Number.isFinite(amountNum) ? amountNum : undefined,
+          paidAt: redirectPaidAt,
+        });
+        if (!cancelled) void load();
+      } catch {
+        // Charge may already be completed / mismatch — polling still applies.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [code, redirectSuccess, redirectTrackId, redirectAmount, redirectPaidAt, load]);
 
   useEffect(() => {
     // Paid / result deep-links skip the invoice intro — still send /start.
